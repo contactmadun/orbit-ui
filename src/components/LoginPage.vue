@@ -38,14 +38,8 @@ import Button from './ui/button/Button.vue'
                     </svg>
                     Login with Google
                 </Button>
-                <div class="text-center text-sm">
-                Belum punya akun?
-                <a href="#" class="underline underline-offset-4">
-                    Daftar
-                </a>
+                <RouterLink to="/register" class="text-center text-sm">Belum punya akun? <span class="underline underline-offset-4">Daftar</span></RouterLink>
                 </div>
-                </div>
-                
             </form>
         </div>
     </div>
