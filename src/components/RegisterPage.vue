@@ -35,7 +35,7 @@ import Button from './ui/button/Button.vue'
                     <Input id="password" type="password" class="w-full" required></Input>
                 </div>
                 <Button type="submit" class="w-full">Daftar Sekarang</Button>
-                <RouterLink to="/" class="text-center text-sm">Sudah punya akun? <span class="underline underline-offset-4">Login</span></RouterLink>
+                <RouterLink to="/" class="text-center text-sm">Sudah punya akun? <span class="underline underline-offset-4">Masuk</span></RouterLink>
             </div>
         </form>
     </div>
