@@ -20,7 +20,8 @@ import Button from './ui/button/Button.vue'
                     <div class="grid gap-2">
                         <div class="flex items-center">
                             <Label for="password">Kata Sandi</Label>
-                            <a href="#" class="ml-auto text-sm underline-offset-4 hover:underline">Lupa Kata Sandi?</a>
+                            <RouterLink to="/forgot-password" class="ml-auto text-sm underline-offset-4 hover:underline">Lupa Kata Sandi?</RouterLink>
+                            <!-- <a href="#" class="">Lupa Kata Sandi?</a> -->
                         </div>
                         <Input id="password" type="password" required></Input>
                     </div>  

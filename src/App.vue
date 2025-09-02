@@ -1,7 +1,5 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-import LoginPage from './components/LoginPage.vue'
+// import LoginPage from './components/LoginPage.vue'
 // import LoginPage from './components/LoginPage.vue';
 </script>
 
@@ -10,7 +8,7 @@ import LoginPage from './components/LoginPage.vue'
   </header>
 
   <main>
-    <LoginPage />
+    <router-view />
   </main>
 </template>
 
