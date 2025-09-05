@@ -11,13 +11,15 @@ const token = route.query.token
 const message = ref("")
 
 onMounted(async () => {
-    if(type === 'activation' && token){
-        try {
-            const res = await api.post(`users/activate/${token}`)
-            message.value = res.data.message || "Aktivasi"
-        } catch (error) {
-            
+    try {
+        if(type === 'activation' && token){
+        const res = await api.post(`users/activate/${token}`)
+        message.value = res.data.message || "Aktivasi"
+        }else if(type === 'reset'){
+            message.value = route.query.message || "Reset Password "
         }
+    } catch (error) {
+        message.value = "Proses gagal"
     }
 })
 

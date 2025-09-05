@@ -4,9 +4,11 @@ import { useRouter } from 'vue-router'
 import api from '../axios'
 import Input from './ui/input/Input.vue'
 import Button from './ui/button/Button.vue'
+import { Eye, EyeOff } from 'lucide-vue-next'
 
 const router = useRouter()
 
+const showPassword = ref(false)
 const msg = ref("");
 const emailError = ref("");
 const form = ref({
@@ -65,7 +67,13 @@ const handleRegist = async () => {
                 </div>
                 <div class="grid gap-2">
                     <Label for="password" class="block text-left">Kata Sandi</Label>
-                    <Input id="password" v-model="form.password" type="password" class="w-full" required></Input>
+                    <div class="relative">
+                        <Input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'" class="w-full pr-10" required></Input>
+                        <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500" @click="showPassword = !showPassword">
+                            <Eye v-if="!showPassword" class="w-5 h-5" />
+                            <EyeOff v-else class="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
                 <Button type="submit" class="w-full">Daftar Sekarang</Button>
                 <RouterLink to="/login" class="text-center text-sm">Sudah punya akun? <span class="underline underline-offset-4">Masuk</span></RouterLink>
