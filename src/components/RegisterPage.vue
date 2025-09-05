@@ -1,8 +1,40 @@
 <script setup>
-// import Label from './ui/label/Label.vue'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '../axios'
 import Input from './ui/input/Input.vue'
 import Button from './ui/button/Button.vue'
 
+const router = useRouter()
+
+const msg = ref("");
+const emailError = ref("");
+const form = ref({
+    name: "",
+    outlet: "",
+    number: "",
+    email: "",
+    password: ""
+})
+
+const handleRegist = async () => {
+    try {
+        const res = await api.post("users", form.value)
+        msg.value = res.data.message
+        console.log(res.data)
+
+        //redirect
+        router.push({
+            path: '/login',
+            query: { msg: msg.value }
+        })
+    } catch (error) {
+        console.log(error)
+        if (error.response?.data?.message === "Email sudah terdaftar!"){
+            emailError.value = error.response.data.message
+        }
+    }
+}
 </script>
 
 <template>
@@ -12,30 +44,31 @@ import Button from './ui/button/Button.vue'
         <p class="text-muted-foreground text-sm">Masukan informasi data diri kamu dibawah ini. Selanjutnya kamu akan mendapatkan link aktivasi akun di email yang didaftarkan. Ayo lengkapi dibawah ini.</p>
     </div>
     <div class="flex flex-col gap-2 items-start lg:justify-center px-5">
-        <form @submit.prevent="handleReset" class="w-full">
+        <form @submit.prevent="handleRegist" class="w-full">
             <div class="grid gap-6">
                 <div class="grid gap-2">
                     <Label for="name" class="block text-left">Nama Lengkap</Label>
-                    <Input id="name" type="text" placeholder="Fulan" class="w-full" required></Input>
+                    <Input id="name" v-model="form.name" type="text" placeholder="Fulan" class="w-full" required></Input>
                 </div>
                 <div class="grid gap-2">
                     <Label for="outlet" class="block text-left">Nama Outlet</Label>
-                    <Input id="outlet" type="text" placeholder="Orbit Cell" class="w-full" required></Input>
+                    <Input id="outlet" v-model="form.outlet" type="text" placeholder="Orbit Cell" class="w-full" required></Input>
                 </div>
                 <div class="grid gap-2">
                     <Label for="number" class="block text-left">Nomor Whatsapp</Label>
-                    <Input id="number" type="number" placeholder="0821xxxx" class="w-full" required></Input>
+                    <Input id="number" v-model="form.number" type="tel" inputmode="numeric" placeholder="0821xxxx" class="w-full" required></Input>
                 </div>
                 <div class="grid gap-2">
                     <Label for="email" class="block text-left">Email</Label>
-                    <Input id="email" type="email" placeholder="emailkamu@mail.com" class="w-full" required></Input>
+                    <Input id="email" v-model="form.email" type="email" placeholder="emailkamu@mail.com" class="w-full" required></Input>
+                    <p v-if="emailError" class="text-red-500 text-sm">{{ emailError }}</p>
                 </div>
                 <div class="grid gap-2">
                     <Label for="password" class="block text-left">Kata Sandi</Label>
-                    <Input id="password" type="password" class="w-full" required></Input>
+                    <Input id="password" v-model="form.password" type="password" class="w-full" required></Input>
                 </div>
                 <Button type="submit" class="w-full">Daftar Sekarang</Button>
-                <RouterLink to="/" class="text-center text-sm">Sudah punya akun? <span class="underline underline-offset-4">Masuk</span></RouterLink>
+                <RouterLink to="/login" class="text-center text-sm">Sudah punya akun? <span class="underline underline-offset-4">Masuk</span></RouterLink>
             </div>
         </form>
     </div>

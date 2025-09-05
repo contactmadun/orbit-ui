@@ -1,28 +1,39 @@
 <script setup>
-// import Label from './ui/label/Label.vue'
-// import Input from './ui/input/Input.vue'
-// import Button from './ui/button/Button.vue'
+import api from '../axios'
 import { useRoute } from 'vue-router';
-import { computed } from 'vue'
+import { onMounted, ref } from 'vue'
 
 const route = useRoute()
 
 const type = route.query.type
-const message = route.query.message
+const token = route.query.token
 
-const title = computed (() => {
-    if (type === 'reset') return 'Reset Password '
-    if (type === 'activation') return 'Aktivasi Akun '
-    return message || ' '
+const message = ref("")
+
+onMounted(async () => {
+    if(type === 'activation' && token){
+        try {
+            const res = await api.post(`users/activate/${token}`)
+            message.value = res.data.message || "Aktivasi"
+        } catch (error) {
+            
+        }
+    }
 })
+
+// const title = computed (() => {
+//     if (type === 'reset') return 'Reset Password '
+//     if (type === 'activation') return 'Aktivasi Akun '
+//     return message || ' '
+// })
 
 </script>
 
 <template>
     <div class="flex items-center justify-center pt-10">
         <div class="flex flex-col items-center gap-2 text-center p-2">
-            <h1 class="text-2xl font-medium lg:text-base">{{ title }}Berhasil</h1>   
-            <p class="text-muted-foreground text-sm">Akunmu telah aktif. Silahkan masuk <br> pada aplikasi pada <router-link to="/" class="underline underline-offset-4">tautan ini</router-link></p>         
+            <h1 class="text-2xl font-medium lg:text-base">{{ message }}Berhasil 🎉</h1>   
+            <p class="text-muted-foreground text-sm">Akunmu telah aktif. Silahkan masuk <br> pada aplikasi pada <router-link to="/login" class="underline underline-offset-4">tautan ini</router-link></p>         
         </div>
     </div>
 </template>
