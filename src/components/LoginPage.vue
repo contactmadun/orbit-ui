@@ -70,6 +70,7 @@ const handleLogin = async () => {
                     <div class="grid gap-2">
                         <Label for="email" class="block text-left">Email</Label>
                         <Input id="email" v-model="email" type="email" placeholder="email@mail.com" class="w-full" required></Input>
+                        <p v-if="errorMessage" class="text-red-500 text-sm text-left">{{ errorMessage }}</p>
                     </div>
                     <div class="grid gap-2">
                         <div class="flex items-center">
