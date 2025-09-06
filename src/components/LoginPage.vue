@@ -2,6 +2,7 @@
 import Label from './ui/label/Label.vue'
 import Input from './ui/input/Input.vue'
 import Button from './ui/button/Button.vue'
+import { useUserStore } from '@/stores'
 import { Rocket, Eye, EyeOff } from 'lucide-vue-next'
 import { Alert, AlertDescription, AlertTitle } from './ui/alert'
 import { useRoute, useRouter } from 'vue-router'
@@ -10,6 +11,7 @@ import api from '../axios'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 const msg = ref("")
 
 const errorMessage = ref("")
@@ -35,6 +37,8 @@ const handleLogin = async () => {
         })
 
         localStorage.setItem("token", res.data.token)
+        userStore.setToken(res.data.token)
+        userStore.setUser(res.data.user)
         router.push("/")
     } catch (error) {
         errorMessage.value = error.response.data.message
