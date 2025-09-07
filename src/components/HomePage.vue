@@ -5,13 +5,43 @@ import { Card, CardContent } from './ui/card'
 import Button from './ui/button/Button.vue'
 import { Bell, User, TrendingUp } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/stores'
 
 const userStore = useUserStore();
-
 const router = useRouter()
 const loading = ref(false)
+
+const currentDateTime = ref('')
+
+const updateDateTime = () => {
+  const now = new Date()
+
+  const formatter = new Intl.DateTimeFormat(navigator.language, {
+    // weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
+
+  currentDateTime.value = formatter.format(now)
+}
+
+let intervalId
+
+onMounted(() => {
+  updateDateTime()
+  intervalId = setInterval(updateDateTime, 1000)
+})
+
+onUnmounted(() => {
+  clearInterval(intervalId)
+})
+
 
 const handleLogout = async () => {
   try {
@@ -34,6 +64,7 @@ const props = defineProps({
   percentage: { type: Number, required: true},
   conditions: { type: String, required: true}
 })
+
 </script>
 
 <template>
@@ -50,8 +81,8 @@ const props = defineProps({
           <!-- Header -->
           <div class="flex justify-between items-center">
             <div class="flex flex-col gap-2">
-              <h2 class="text-base font-medium">Ayo buka kasir</h2>
-              <p class="text-sm text-gray-400">Buka kasir sekarang dan masukan modal awal</p>
+              <h2 class="text-base font-medium">Ayo Buka Kasir</h2>
+              <p class="text-sm text-gray-400">{{ currentDateTime }}</p>
             </div>
             <Button variant="outline" size="sm" class="px-4 py-5 text-black">Buka Kasir</Button>
           </div>
@@ -61,13 +92,13 @@ const props = defineProps({
         <CardContent class="px-5 pb-5 flex flex-col gap-3">
           <!-- Header -->
           <div class="flex justify-between items-center">
-            <h2 class="text-base font-medium">Keuntungan</h2>
+            <TrendingUp class="w-5 h-5 text-gray-500" />
+            <h2 class="text-lg font-medium">Keuntungan</h2>
             <Button variant="outline" size="sm" class="px-4 py-5">Lihat Detail</Button>
           </div>
 
           <!-- Value -->
           <div class="flex items-center gap-3">
-            <TrendingUp class="w-6 h-6 text-gray-500" />
             <div class="flex items-baseline gap-2">
               <span class="text-2xl font-bold">Rp250.000</span>
               <span class="text-green-500 font-medium text-sm">+2000</span>
