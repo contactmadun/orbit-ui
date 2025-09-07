@@ -45,20 +45,32 @@ const props = defineProps({
       </div>
       <Bell class="w-5 h-5 cursor-pointer" />
       </div>  
+      <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl text-white bg-gray-900">
+        <CardContent class="px-2 pb-2 flex flex-col gap-3">
+          <!-- Header -->
+          <div class="flex justify-between items-center">
+            <div class="flex flex-col gap-2">
+              <h2 class="text-base font-medium">Ayo buka kasir</h2>
+              <p class="text-sm font-medium text-gray-400">Buka kasir sekarang dan masukan modal awal</p>
+            </div>
+            <Button variant="outline" size="sm" class="px-4 py-5 text-black">Buka Kasir</Button>
+          </div>
+        </CardContent>
+      </Card>
       <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl">
         <CardContent class="px-5 pb-5 flex flex-col gap-3">
           <!-- Header -->
           <div class="flex justify-between items-center">
             <h2 class="text-base font-medium">Keuntungan</h2>
-            <Button variant="outline" size="sm" class="px-4 py-5">See Details</Button>
+            <Button variant="outline" size="sm" class="px-4 py-5">Lihat Detail</Button>
           </div>
 
           <!-- Value -->
           <div class="flex items-center gap-3">
             <TrendingUp class="w-6 h-6 text-gray-500" />
             <div class="flex items-baseline gap-2">
-              <span class="text-xl font-bold">Rp250.000</span>
-              <span class="text-green-500 font-medium text-sm">+20</span>
+              <span class="text-2xl font-bold">Rp250.000</span>
+              <span class="text-green-500 font-medium text-sm">+2000</span>
             </div>
           </div>
 
