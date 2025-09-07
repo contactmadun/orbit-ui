@@ -8,6 +8,7 @@ import { useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/stores'
 import BottomNav from './reusable/BottomNav.vue'
+import RecentTrx from './reusable/RecentTransactions.vue'
 
 const userStore = useUserStore();
 const router = useRouter()
@@ -114,6 +115,7 @@ const props = defineProps({
           </p>
         </CardContent>
       </Card>
+      <RecentTrx class="mt-10" />
       <button @click="handleLogout" class="underline mt-80" :disabled="loading">{{ loading ? "Proses logout..." : "logout" }}</button>
       <p class="mt-50">percobaan</p>
       <BottomNav />
