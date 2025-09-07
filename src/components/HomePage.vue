@@ -89,7 +89,9 @@ const props = defineProps({
               <h2 class="text-base font-medium">Ayo Buka Kasir</h2>
               <p class="text-sm text-gray-400">{{ currentDateTime }}</p>
             </div>
-            <Button variant="outline" size="sm" class="px-4 py-5 text-black">Buka Kasir</Button>
+            <RouterLink to="/open-cashier">
+              <Button variant="outline" size="sm" class="px-4 py-5 text-black">Buka Kasir</Button>
+            </RouterLink>
           </div>
         </CardContent>
       </Card>
@@ -120,7 +122,7 @@ const props = defineProps({
       </Card>
       <MainMenu class="mt-3" />
       <FinancialReport class="mt-10" />
-      <TransactionReport class="mt-5" />
+      <TransactionReport class="mt-10" />
       <RecentTrx class="mt-5" />
       <button @click="handleLogout" class="underline mt-80" :disabled="loading">{{ loading ? "Proses logout..." : "logout" }}</button>
       <p class="mt-50">percobaan</p>
