@@ -46,12 +46,12 @@ const props = defineProps({
       <Bell class="w-5 h-5 cursor-pointer" />
       </div>  
       <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl text-white bg-gray-900">
-        <CardContent class="px-2 pb-2 flex flex-col gap-3">
+        <CardContent class="px-2 py-1 flex flex-col gap-3">
           <!-- Header -->
           <div class="flex justify-between items-center">
             <div class="flex flex-col gap-2">
               <h2 class="text-base font-medium">Ayo buka kasir</h2>
-              <p class="text-sm font-medium text-gray-400">Buka kasir sekarang dan masukan modal awal</p>
+              <p class="text-sm text-gray-400">Buka kasir sekarang dan masukan modal awal</p>
             </div>
             <Button variant="outline" size="sm" class="px-4 py-5 text-black">Buka Kasir</Button>
           </div>
