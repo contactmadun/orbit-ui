@@ -17,7 +17,7 @@ const currentDateTime = ref('')
 const updateDateTime = () => {
   const now = new Date()
 
-  const formatter = new Intl.DateTimeFormat(navigator.language, {
+  const formatter = new Intl.DateTimeFormat(navigator.language || 'id-ID', {
     // weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -89,11 +89,13 @@ const props = defineProps({
         </CardContent>
       </Card>
       <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl">
-        <CardContent class="px-5 pb-5 flex flex-col gap-3">
+        <CardContent class="px-5 pb-3 flex flex-col gap-3">
           <!-- Header -->
           <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
             <TrendingUp class="w-5 h-5 text-gray-500" />
             <h2 class="text-lg font-medium">Keuntungan</h2>
+          </div>
             <Button variant="outline" size="sm" class="px-4 py-5">Lihat Detail</Button>
           </div>
 
