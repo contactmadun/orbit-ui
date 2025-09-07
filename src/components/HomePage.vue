@@ -46,7 +46,7 @@ const props = defineProps({
       <Bell class="w-5 h-5 cursor-pointer" />
       </div>  
       <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl text-white bg-gray-900">
-        <CardContent class="px-2 py-1 flex flex-col gap-3">
+        <CardContent class="px-3 flex flex-col gap-3">
           <!-- Header -->
           <div class="flex justify-between items-center">
             <div class="flex flex-col gap-2">
