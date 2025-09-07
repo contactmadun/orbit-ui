@@ -46,7 +46,7 @@ const props = defineProps({
       <Bell class="w-5 h-5 cursor-pointer" />
       </div>  
       <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl">
-        <CardContent class="px-5 pb-10 flex flex-col gap-3">
+        <CardContent class="px-5 pb-5 flex flex-col gap-3">
           <!-- Header -->
           <div class="flex justify-between items-center">
             <h2 class="text-base font-medium">Keuntungan</h2>
@@ -64,7 +64,7 @@ const props = defineProps({
 
           <!-- Info -->
           <p class="text-sm text-gray-600">
-            <span class="font-bold">58%</span> – Common conditions: {{ conditions }}
+            <span class="font-bold">58%</span> lebih tinggi dari hari kemarin
           </p>
         </CardContent>
       </Card>
