@@ -7,6 +7,7 @@ import { Bell, User, TrendingUp } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/stores'
+import BottomNav from './reusable/BottomNav.vue'
 
 const userStore = useUserStore();
 const router = useRouter()
@@ -89,12 +90,12 @@ const props = defineProps({
         </CardContent>
       </Card>
       <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl">
-        <CardContent class="px-5 pb-3 flex flex-col gap-3">
+        <CardContent class="px-5 pb-2 flex flex-col gap-3">
           <!-- Header -->
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-2">
             <TrendingUp class="w-5 h-5 text-gray-500" />
-            <h2 class="text-lg font-medium">Keuntungan</h2>
+            <h2 class="text-md font-medium">Keuntungan</h2>
           </div>
             <Button variant="outline" size="sm" class="px-4 py-5">Lihat Detail</Button>
           </div>
@@ -109,10 +110,12 @@ const props = defineProps({
 
           <!-- Info -->
           <p class="text-sm text-gray-600">
-            <span class="font-bold">58%</span> lebih tinggi dari hari kemarin
+            <span class="font-bold">120</span> transaksi selesai saat ini
           </p>
         </CardContent>
       </Card>
-      <button @click="handleLogout" class="underline" :disabled="loading">{{ loading ? "Proses logout..." : "logout" }}</button>
+      <button @click="handleLogout" class="underline mt-80" :disabled="loading">{{ loading ? "Proses logout..." : "logout" }}</button>
+      <p class="mt-50">percobaan</p>
+      <BottomNav />
     </div>
 </template>
