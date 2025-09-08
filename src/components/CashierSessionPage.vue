@@ -1,5 +1,6 @@
 <script setup>
 // import Label from './ui/label/Label.vue'
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from './ui/sheet'
 import { Card, CardContent } from './ui/card'
 import Input from './ui/input/Input.vue'
 import Button from './ui/button/Button.vue'
@@ -13,7 +14,8 @@ const router = useRouter();
 
 const cashRegister = ref('')
 const mobileMoney = ref('')
-const fundSources = ref([{ id: 1, label: 'Uang Cash', value: '' }, { id: 2, label: 'E-Wallet Dana', value: '' }])
+const fundSources = ref([])
+//const fundSources = ref([{ id: 1, label: 'Uang Cash', value: '' }, { id: 2, label: 'E-Wallet Dana', value: '' }])
 
 //Validasi Tombol
 const canOpenCashier = computed(() => {
@@ -38,23 +40,97 @@ const emailError = ref("");
                     <Wallet class="w-5 h-5" ></Wallet>
                     <h2 class="text-lg font-medium">Sumber Dana</h2>
                 </div>
-                <div v-for="(src, index) in fundSources" :key="src.id" class="space-y-2 w-full">
-                    <label class="text-sm font-medium">{{ src.label }}</label>
-                    <Input
-                    class="mt-2 mb-2 text-sm"
-                    type="number"
-                    placeholder="Masukan Nominal"
-                    v-model="src.value"
-                    />
+
+                <!-- Kondisi jika tidak ada sumber dana -->
+                <div v-if="fundSources.length === 0" class="flex flex-col items-center justify-center py-5 text-center">
+                  <p class="text-sm mb-3">Belum terdapat sumber dana</p>
+                  <!-- Trigger -->
+                  <Sheet>
+                    <SheetTrigger as-child>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="flex items-center gap-2 px-3 py-2 border rounded-md"
+                      >
+                        <Plus class="w-4 h-4" /> Tambah Sumber
+                      </Button>
+                    </SheetTrigger>
+
+                    <!-- Bottom Sheet -->
+                    <SheetContent side="bottom" class="p-5">
+                      <SheetHeader>
+                        <SheetTitle class="text-center">Sumber Dana</SheetTitle>
+                        <SheetDescription class="text-center">
+                          Sumber dana adalah sumber modal awal yang akan diberikan tiap kali kamu membuka kasir
+                        </SheetDescription>
+                      </SheetHeader>
+
+                      <div class="mt-4 flex flex-col gap-3">
+                        <label class="text-sm font-medium">Nama Sumber Dana</label>
+                        <Input
+                          v-model="newFundName"
+                          type="text"
+                          placeholder="Masukkan nama sumber dana"
+                        />
+                      </div>
+
+                      <SheetFooter class="mt-6">
+                        <Button class="w-full" @click="saveFundSource">
+                          Simpan Data
+                        </Button>
+                      </SheetFooter>
+                    </SheetContent>
+                  </Sheet>
                 </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    class="flex items-center gap-2 px-3 py-2 border rounded-md w-fit mt-5"
-                    @click="addFundSource"
-                >
-                    <Plus class="w-4 h-4" /> Tambah Sumber
-                </Button>
+
+                <!-- Kondisi jika ada sumber dana -->
+                <div v-else>
+                  <div v-for="(src, index) in fundSources" :key="src.id" class="space-y-2 w-full">
+                      <label class="text-sm font-medium">{{ src.label }}</label>
+                      <Input
+                      class="mt-2 mb-2 text-sm"
+                      type="number"
+                      placeholder="Masukan Nominal"
+                      v-model="src.value"
+                      />
+                  </div>
+                  <Sheet>
+                    <SheetTrigger as-child>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="flex items-center gap-2 px-3 py-2 border rounded-md mt-5"
+                      >
+                        <Plus class="w-4 h-4" /> Tambah Sumber
+                      </Button>
+                    </SheetTrigger>
+
+                    <!-- Bottom Sheet -->
+                    <SheetContent side="bottom" class="p-5">
+                      <SheetHeader>
+                        <SheetTitle class="text-center">Sumber Dana</SheetTitle>
+                        <SheetDescription class="text-center">
+                          Sumber dana adalah sumber modal awal yang akan diberikan tiap kali kamu membuka kasir
+                        </SheetDescription>
+                      </SheetHeader>
+
+                      <div class="mt-4 flex flex-col gap-3">
+                        <label class="text-sm font-medium">Nama Sumber Dana</label>
+                        <Input
+                          v-model="newFundName"
+                          type="text"
+                          placeholder="Masukkan nama sumber dana"
+                        />
+                      </div>
+
+                      <SheetFooter class="mt-6">
+                        <Button class="w-full" @click="saveFundSource">
+                          Simpan Data
+                        </Button>
+                      </SheetFooter>
+                    </SheetContent>
+                  </Sheet>
+                </div>
             </div>
           </div>
         </CardContent>
@@ -65,7 +141,7 @@ const emailError = ref("");
                 class="w-full"
                 :disabled="!canOpenCashier"
                 @click="openCashier">
-                Open Cashier
+                Buka Kasir
             </Button>
         </CardContent>
       </Card>
