@@ -9,13 +9,49 @@ import { ref, computed } from 'vue'
 import api from '../axios'
 import TopNavbar from './reusable/TopNavbar.vue'
 import { Plus, Wallet } from 'lucide-vue-next'
+import { useUserStore  } from '@/stores'
+
+const userStore = useUserStore()
+console.log(userStore.storeId);
 
 const router = useRouter();
 
-const cashRegister = ref('')
-const mobileMoney = ref('')
+// const cashRegister = ref('')
+// const mobileMoney = ref('')
 const fundSources = ref([])
+const newFundName = ref('')
+const openSheet = ref(false)
 //const fundSources = ref([{ id: 1, label: 'Uang Cash', value: '' }, { id: 2, label: 'E-Wallet Dana', value: '' }])
+
+const saveFundSource = async () => {
+  if (!newFundName.value) return
+  if (!userStore.storeId) {
+    console.error('StoreId tidak ditemukan, pastikan user sudah login')
+    return
+  }
+
+  try {
+    const { data } = await api.post('fund', {
+      storeId: userStore.storeId,   // ambil dari pinia
+      name: newFundName.value
+    }, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+
+    // tambahkan ke state lokal supaya UI langsung update
+    fundSources.value.push({
+      id: data.id,
+      label: data.name,
+      value: ''
+    })
+
+    // reset & close
+    newFundName.value = ''
+    openSheet.value = false
+  } catch (err) {
+    console.error('Gagal simpan sumber dana:', err)
+  }
+}
 
 //Validasi Tombol
 const canOpenCashier = computed(() => {
