@@ -5,14 +5,14 @@ import { Card, CardContent } from './ui/card'
 import Input from './ui/input/Input.vue'
 import Button from './ui/button/Button.vue'
 import { useRouter } from 'vue-router'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '../axios'
 import TopNavbar from './reusable/TopNavbar.vue'
 import { Plus, Wallet } from 'lucide-vue-next'
 import { useUserStore  } from '@/stores'
 
 const userStore = useUserStore()
-console.log(userStore.storeId);
+// console.log(userStore.storeId);
 
 const router = useRouter();
 
@@ -22,6 +22,26 @@ const fundSources = ref([])
 const newFundName = ref('')
 const openSheet = ref(false)
 //const fundSources = ref([{ id: 1, label: 'Uang Cash', value: '' }, { id: 2, label: 'E-Wallet Dana', value: '' }])
+
+const fetchFundSources = async () => {
+  if (!userStore.storeId) {
+    console.error("StoreId tidak ditemukan, pastikan user sudah login")
+    return
+  }
+  try {
+    const { data } = await api.get(`fund/${userStore.storeId}`, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    // format ulang sesuai kebutuhan UI
+    fundSources.value = data.map(fund => ({
+      id: fund.id,
+      label: fund.name,
+      value: '' // nominal default kosong
+    }))
+  } catch (err) {
+    console.error("Gagal fetch fund sources:", err)
+  }
+}
 
 const saveFundSource = async () => {
   if (!newFundName.value) return
@@ -53,6 +73,10 @@ const saveFundSource = async () => {
   }
 }
 
+onMounted(() => {
+  fetchFundSources()
+})
+
 //Validasi Tombol
 const canOpenCashier = computed(() => {
   return fundSources.value.some(src => src.value && parseFloat(src.value) > 0)
@@ -81,7 +105,7 @@ const emailError = ref("");
                 <div v-if="fundSources.length === 0" class="flex flex-col items-center justify-center py-5 text-center">
                   <p class="text-sm mb-3">Belum terdapat sumber dana</p>
                   <!-- Trigger -->
-                  <Sheet>
+                  <Sheet v-model:open="openSheet">
                     <SheetTrigger as-child>
                       <Button
                         variant="outline"
