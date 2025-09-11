@@ -5,15 +5,31 @@ import { Card, CardContent } from './ui/card'
 import Button from './ui/button/Button.vue'
 import { Bell, User, TrendingUp } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useUserStore } from '@/stores'
 import BottomNav from './reusable/BottomNav.vue'
 import RecentTrx from './reusable/RecentTransactions.vue'
 import MainMenu from './reusable/MainMenu.vue'
 import FinancialReport from './reusable/FinancialReport.vue'
 import TransactionReport from './reusable/TransactionReport.vue'
+import api from '../axios'
 
 const userStore = useUserStore();
+const cashierSession = ref(null)
+
+const fetchCashierSession = async () => {
+  if (!userStore.storeId) return
+  try {
+    const { data } = await api.get(`/cashier/session/${userStore.storeId}`, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    // asumsi backend return session aktif atau null
+    cashierSession.value = data
+  } catch (err) {
+    console.error("Gagal fetch cashier session:", err)
+  }
+}
+
 const router = useRouter()
 const loading = ref(false)
 
@@ -41,12 +57,14 @@ let intervalId
 onMounted(() => {
   updateDateTime()
   intervalId = setInterval(updateDateTime, 1000)
+  fetchCashierSession()
 })
 
 onUnmounted(() => {
   clearInterval(intervalId)
 })
 
+const isOpen = computed(() => cashierSession.value?.status === "open")
 
 const handleLogout = async () => {
   try {
@@ -89,9 +107,22 @@ const props = defineProps({
               <h2 class="text-base font-medium">Ayo Buka Kasir</h2>
               <p class="text-sm text-gray-400">{{ currentDateTime }}</p>
             </div>
-            <RouterLink to="/open-cashier">
+            <div>
+              <RouterLink
+                v-if="isOpen"
+                to="/close-cashier">
+                <Button variant="outline" size="sm" class="px-4 py-5 text-black">Tutup Kasir</Button>
+              </RouterLink>
+
+              <RouterLink
+                v-else
+                to="/open-cashier">
+                <Button variant="outline" size="sm" class="px-4 py-5 text-black">Buka Kasir</Button>
+              </RouterLink>
+            </div>
+            <!-- <RouterLink to="/open-cashier">
               <Button variant="outline" size="sm" class="px-4 py-5 text-black">Buka Kasir</Button>
-            </RouterLink>
+            </RouterLink> -->
           </div>
         </CardContent>
       </Card>

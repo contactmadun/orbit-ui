@@ -6,6 +6,8 @@ import Register from '../components/RegisterPage.vue'
 import Notif from '../components/NotifPage.vue'
 import Home from '../components/HomePage.vue'
 import OpenCashier from '../components/CashierSessionPage.vue'
+import CloseCashier from '../components/CloseCashierPage.vue'
+import Cashier from '../components/CashierPage.vue'
 
 const routes = [
     {
@@ -43,6 +45,16 @@ const routes = [
     path: '/open-cashier',
     name: 'cashier',
     component: OpenCashier
+    },
+    {
+    path: '/close-cashier',
+    name: 'cashierClose',
+    component: CloseCashier
+    },
+    {
+    path: '/cashier',
+    name: 'cashierOpen',
+    component: Cashier
     },
 ]
 

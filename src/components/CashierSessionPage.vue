@@ -77,6 +77,36 @@ onMounted(() => {
   fetchFundSources()
 })
 
+const openCashier = async () => {
+  if (!userStore.user.id || !userStore.storeId) {
+    console.error("UserId / StoreId tidak ditemukan")
+    return
+  }
+
+  try {
+    // mapping fundSources jadi {fundSourceId, amount}
+    const fundsPayload = fundSources.value
+      .filter(f => f.value && parseFloat(f.value) > 0)
+      .map(f => ({
+        fundSourceId: f.id,
+        amount: parseFloat(f.value)
+      }))
+
+    const { data } = await api.post("cashier", {
+      userId: userStore.user.id,
+      storeId: userStore.storeId,
+      funds: fundsPayload
+    }, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+
+    console.log("Kasir berhasil dibuka:", data)
+    router.push("/cashier") // redirect ke halaman kasir misalnya
+  } catch (err) {
+    console.error("Gagal membuka kasir:", err)
+  }
+}
+
 //Validasi Tombol
 const canOpenCashier = computed(() => {
   return fundSources.value.some(src => src.value && parseFloat(src.value) > 0)
