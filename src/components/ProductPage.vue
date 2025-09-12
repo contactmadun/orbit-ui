@@ -1,5 +1,5 @@
-<script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue"
+<script setup> 
+import { ref, computed } from "vue"
 import { ChevronDown } from "lucide-vue-next"
 import {
   Select,
@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const bestProduct = ref("Home Living")
+const bestProduct = ref("Aksesoris")
 const totalSales = ref(4.956) // dalam K (ribuan)
 const percentage = ref(25)
 
@@ -17,14 +17,25 @@ const selectedPeriod = ref("monthly")
 
 // data kategori produk
 const categories = ref([
-  { name: "Electronics", value: 15 },
-  { name: "Automotive", value: 20 },
-  { name: "Home Living", value: 90 }, // highlight
-  { name: "Sports", value: 10 },
-  { name: "Groceries", value: 8 },
+  { name: "Voucher", value: 15 },
+  { name: "Kartu", value: 20 },
+  { name: "Aksesoris", value: 300 }, // highlight
+  { name: "Pulsa", value: 100 },
+  { name: "Data", value: 8 },
   { name: "More", value: 5 },
 ])
 
+const CHART_HEIGHT_PX = 192 // h-48 -> 48 * 4 = 192px
+
+// normalisasi value agar tidak melebihi tinggi container
+const normalized = computed(() => {
+  const max = Math.max(...categories.value.map(c => c.value), 1) // prevent div by 0
+  return categories.value.map(c => {
+    const ratio = c.value / max
+    const px = Math.round(ratio * CHART_HEIGHT_PX)
+    return { ...c, px }
+  })
+})
 </script>
 
 <template>
@@ -60,9 +71,9 @@ const categories = ref([
     </div>
 
     <!-- Chart kategori -->
-    <div class="mt-6 flex items-end gap-4 h-40 w-full">
+    <div class="mt-6 flex items-end gap-4 h-48 w-full">
       <div
-        v-for="cat in categories"
+        v-for="cat in normalized"
         :key="cat.name"
         class="flex flex-col items-center justify-end flex-1"
       >
@@ -74,9 +85,9 @@ const categories = ref([
               ? 'bg-blue-500'
               : 'bg-gray-200'
           ]"
-          :style="{ height: cat.value + 'px' }"
+          :style="{ height: cat.px + 'px' }"
         ></div>
-
+          
         <!-- Label -->
         <span
           class="text-xs mt-2 text-center"
