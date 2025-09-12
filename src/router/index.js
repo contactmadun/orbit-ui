@@ -8,6 +8,7 @@ import Home from '../components/HomePage.vue'
 import OpenCashier from '../components/CashierSessionPage.vue'
 import CloseCashier from '../components/CloseCashierPage.vue'
 import Cashier from '../components/CashierPage.vue'
+import Product from '../components/ProductPage.vue'
 
 const routes = [
     {
@@ -55,6 +56,11 @@ const routes = [
     path: '/cashier',
     name: 'cashierOpen',
     component: Cashier
+    },
+    {
+    path: '/product',
+    name: 'product',
+    component: Product
     },
 ]
 

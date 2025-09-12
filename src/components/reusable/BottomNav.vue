@@ -6,7 +6,7 @@ const activeTab = ref('home')
 
 const menus = [
   { name: 'Home', icon: Home, key: 'home' },
-  { name: 'Wallet', icon: Wallet, key: 'wallet' },
+  { name: 'Cashier', icon: Wallet, key: 'wallet' },
   { name: 'Analytics', icon: BarChart2, key: 'analytics' },
   { name: 'Setting', icon: Settings, key: 'setting' },
 ]

@@ -3,10 +3,10 @@ import { ShoppingCart, Wallet, Package, MoreHorizontal } from 'lucide-vue-next'
 
 // daftar menu, bisa dipakai untuk loop
 const menus = [
-  { name: 'Penjualan', icon: ShoppingCart, key: 'penjualan' },
-  { name: 'Keuangan', icon: Wallet, key: 'keuangan' },
-  { name: 'Produk', icon: Package, key: 'produk' },
-  { name: 'Lainnya', icon: MoreHorizontal, key: 'lainnya' },
+  { name: 'Penjualan', icon: ShoppingCart, key: 'penjualan', route: '/transaction' },
+  { name: 'Keuangan', icon: Wallet, key: 'keuangan', route: '/report' },
+  { name: 'Produk', icon: Package, key: 'produk', route: '/product' },
+  { name: 'Lainnya', icon: MoreHorizontal, key: 'lainnya', route: '/other' },
 ]
 
 const emit = defineEmits(['select'])
@@ -18,8 +18,9 @@ const handleSelect = (menu) => {
 
 <template>
   <div class="grid grid-cols-4 gap-3 w-full">
-    <div
+    <RouterLink
       v-for="menu in menus"
+      :to="menu.route"
       :key="menu.key"
       class="flex flex-col items-center justify-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition"
       @click="handleSelect(menu)"
@@ -28,6 +29,6 @@ const handleSelect = (menu) => {
       <span class="text-xs text-center">
         {{ menu.name }}
       </span>
-    </div>
+    </RouterLink>
   </div>
 </template>
