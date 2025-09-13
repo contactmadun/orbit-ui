@@ -34,14 +34,45 @@ const categorys = [
   { label: "Aksesoris", value: "Aksesoris" },
 ]
 
+// form states
+const name = ref("")
+const description = ref("")
+const purchasePrice = ref("")
+const agentPrice = ref("")
+const retailPrice = ref("")
+const stok = ref("")
+const minimumStok = ref("")
 const selectedBrand = ref(null)
-const selectedCategory  = ref(null)
+const selectedCategory = ref(null)
+
+// handle submit
+const saveProduct = async () => {
+  try {
+    const payload = {
+      name: name.value,
+      brand: selectedBrand.value?.value,
+      category: selectedCategory.value?.value,
+      description: description.value,
+      purchasePrice: purchasePrice.value,
+      agentPrice: agentPrice.value,
+      retailPrice: retailPrice.value,
+      stok: stok.value,
+      minimumStok: minimumStok.value
+    }
+
+    await api.post('/products', payload)
+    alert("Produk berhasil disimpan ✅")
+  } catch (err) {
+    console.error(err)
+    alert("Gagal menyimpan produk ❌")
+  }
+}
 
 </script>
 
 <template>
     <TopNavbar title="Tambah Produk"/>
-    <div class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 px-5">
+    <form @submit.prevent="saveProduct" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 px-5">
     <div class="w-full">
         <h1 class="font-medium mb-7">Info Produk</h1>
         <div class="grid gap-2 w-full">
@@ -52,7 +83,7 @@ const selectedCategory  = ref(null)
             <!-- Kolom Penjualan -->
             <div class="flex flex-col items-start py-4">
                 <Label for="name" class="block text-left text-gray-500 mb-2">Brand</Label>
-                <Combobox v-model="value" by="label">
+                <Combobox v-model="selectedBrand" by="label">
                 <ComboboxAnchor as-child>
                 <ComboboxTrigger as-child>
                     <Button variant="outline" class="w-[150px] justify-between text-gray-500 font-normal">
@@ -94,7 +125,7 @@ const selectedCategory  = ref(null)
             <!-- Kolom Pengeluaran -->
             <div class="flex flex-col items-start py-4">
                <Label for="name" class="block text-left text-gray-500 mb-2">Kategori</Label>
-                <Combobox v-model="value" by="label">
+                <Combobox v-model="selectedCategory" by="label">
                 <ComboboxAnchor as-child>
                 <ComboboxTrigger as-child>
                     <Button variant="outline" class="w-[150px] justify-between text-gray-500 font-normal">
@@ -161,6 +192,16 @@ const selectedCategory  = ref(null)
             <Label for="stok" class="block text-left text-gray-500">Stok Produk</Label>
             <Input id="stok" v-model="stok" placeholder="Stok Produk" type="tel" class="w-full text-sm" required></Input>
         </div>
+        <div class="grid gap-2 w-full mb-4">
+            <Label for="minimumStok" class="block text-left text-gray-500">Stok Produk</Label>
+            <Input id="minimumStok" v-model="minimumStok" placeholder="Minimum Stok Produk" type="tel" class="w-full text-sm" required></Input>
+        </div>
     </div>
+    <!-- Submit Button -->
+    <div class="w-full mt-6">
+      <Button type="submit" class="w-full text-white">
+        Simpan Data
+      </Button>
     </div>
+    </form>
 </template>
