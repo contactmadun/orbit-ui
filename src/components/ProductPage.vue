@@ -2,6 +2,7 @@
 import MenuProduct from './reusable/MenuProduct.vue'
 import { ref, computed } from "vue"
 import { ChevronDown } from "lucide-vue-next"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -9,12 +10,63 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs"
 
 const bestProduct = ref("Aksesoris")
 const totalSales = ref(4.956) // dalam K (ribuan)
 const percentage = ref(25)
 
 const selectedPeriod = ref("monthly")
+
+// Data produk
+const products = ref([
+  {
+    id: 1,
+    name: "Kabel Charger",
+    stock: 5,
+    status: "Low Stock",
+    category: "Aksesoris",
+    brand: "Anker",
+    price: 75000,
+  },
+  {
+    id: 2,
+    name: "Voucher Data 10GB",
+    stock: 200,
+    status: "Available",
+    category: "Voucher",
+    brand: "Telkomsel",
+    price: 50000,
+  },
+  {
+    id: 3,
+    name: "Kartu Perdana",
+    stock: 0,
+    status: "Out of Stock",
+    category: "Kartu",
+    brand: "XL",
+    price: 15000,
+  },
+])
+
+// Search & filter
+const search = ref("")
+const selectedCategory = ref("all")
+
+// Filter hasil berdasarkan search & kategori
+const filteredProducts = computed(() => {
+  return products.value.filter((p) => {
+    const matchSearch = p.name.toLowerCase().includes(search.value.toLowerCase())
+    const matchCategory = selectedCategory.value === "all" || p.category === selectedCategory.value
+    return matchSearch && matchCategory
+  })
+})
+
 
 // data kategori produk
 const categories = ref([
@@ -139,5 +191,108 @@ const props = defineProps({
     </div>
   </section>
   <MenuProduct />
+  <!-- Tabel section -->
+   <div class="p-1 w-full">
+    <!-- Tabs -->
+    <Tabs default-value="all" class="w-full">
+      <TabsList class="mb-4">
+        <TabsTrigger value="all" @click="selectedCategory = 'all'">Semua Produk</TabsTrigger>
+        <TabsTrigger value="Low Stock" @click="selectedCategory = 'Aksesoris'">Low Stock</TabsTrigger>
+        <TabsTrigger value="Out of Stock" @click="selectedCategory = 'Kartu'">Out of Stock</TabsTrigger>
+      </TabsList>
+
+      <!-- Search & Filter -->
+      <!-- <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
+        <Input
+          v-model="search"
+          type="text"
+          placeholder="Cari produk..."
+          class="w-full md:w-1/3"
+        />
+
+        <Select v-model="selectedCategory">
+          <SelectTrigger class="w-[180px]">
+            <SelectValue placeholder="Filter kategori" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua</SelectItem>
+            <SelectItem value="Voucher">Voucher</SelectItem>
+            <SelectItem value="Aksesoris">Aksesoris</SelectItem>
+            <SelectItem value="Kartu">Kartu</SelectItem>
+          </SelectContent>
+        </Select>
+      </div> -->
+
+      <!-- Table Wrapper (scroll-x) -->
+      <div class="overflow-x-auto border rounded-lg">
+        <table class="min-w-[800px] w-full border-collapse">
+          <thead class="text-left text-sm text-gray-600">
+            <tr>
+              <th colspan="7" class="px-4 py-3">
+                <div class="flex flex-wrap gap-3 items-center">
+                  <!-- Search -->
+                  <input
+                    v-model="search"
+                    type="text"
+                    placeholder="Search product..."
+                    class="border rounded-md px-3 py-1 text-sm w-64 focus:ring focus:ring-blue-200"
+                  />
+
+                  <!-- Filter Status -->
+                  <Select v-model="selectedCategory">
+                    <SelectTrigger class="w-[180px]">
+                      <SelectValue placeholder="Filter kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua</SelectItem>
+                      <SelectItem value="Voucher">Voucher</SelectItem>
+                      <SelectItem value="Aksesoris">Aksesoris</SelectItem>
+                      <SelectItem value="Kartu">Kartu</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </th>
+            </tr>
+            <tr class="bg-gray-100">
+              <th class="px-4 py-2">Nama Produk</th>
+              <th class="px-4 py-2">Stok</th>
+              <th class="px-4 py-2">Status</th>
+              <th class="px-4 py-2">Kategori</th>
+              <th class="px-4 py-2">Brand</th>
+              <th class="px-4 py-2">Harga</th>
+              <th class="px-4 py-2">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="product in filteredProducts"
+              :key="product.id"
+              class="border-b hover:bg-gray-50 text-sm"
+            >
+              <td class="px-4 py-2 font-medium">{{ product.name }}</td>
+              <td class="px-4 py-2">{{ product.stock }}</td>
+              <td
+                class="px-4 py-2"
+                :class="{
+                  'text-green-600': product.status === 'Available',
+                  'text-red-600': product.status === 'Out of Stock',
+                  'text-yellow-600': product.status === 'Low Stock',
+                }"
+              >
+                {{ product.status }}
+              </td>
+              <td class="px-4 py-2">{{ product.category }}</td>
+              <td class="px-4 py-2">{{ product.brand }}</td>
+              <td class="px-4 py-2">Rp{{ product.price.toLocaleString("id-ID") }}</td>
+              <td class="px-4 py-2">
+                <button class="text-blue-600 hover:underline text-xs">Edit</button>
+                <button class="text-red-600 hover:underline text-xs ml-2">Hapus</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </Tabs>
+  </div>
   </div>
 </template>
