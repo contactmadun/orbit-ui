@@ -43,7 +43,7 @@ const selectedCategory  = ref(null)
     <TopNavbar title="Tambah Produk"/>
     <div class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 px-5">
     <div class="w-full">
-        <h1 class="font-medium mb-7">Produk Info</h1>
+        <h1 class="font-medium mb-7">Info Produk</h1>
         <div class="grid gap-2 w-full">
             <Label for="name" class="block text-left text-gray-500">Nama Produk</Label>
             <Input id="text" v-model="name" placeholder="Voucher Data Tsel" class="w-full text-sm" required></Input>
@@ -72,7 +72,7 @@ const selectedCategory  = ref(null)
                 </div>
 
                 <ComboboxEmpty>
-                    No framework found.
+                    Brand tidak ditemukan.
                 </ComboboxEmpty>
 
                 <ComboboxGroup>
@@ -114,7 +114,7 @@ const selectedCategory  = ref(null)
                 </div>
 
                 <ComboboxEmpty>
-                    No framework found.
+                    Kategori tidak ditemukan.
                 </ComboboxEmpty>
 
                 <ComboboxGroup>
@@ -142,7 +142,25 @@ const selectedCategory  = ref(null)
             </p>
         </div>
         <div class="border-b border-dashed mt-5 w-full"></div>
-        <h1 class="font-medium mb-7 mt-5">Stok Info</h1>
+        <h1 class="font-medium mb-7 mt-5">Info Harga</h1>
+        <div class="grid gap-2 w-full mb-4">
+            <Label for="purchase-price" class="block text-left text-gray-500">Harga Modal</Label>
+            <Input id="purchase-price" v-model="purchasePrice" placeholder="Harga Modal" type="tel" class="w-full text-sm" required></Input>
+        </div>
+        <div class="grid gap-2 w-full mb-4">
+            <Label for="agent-price" class="block text-left text-gray-500">Harga Agent</Label>
+            <Input id="agent-price" v-model="agentPrice" placeholder="Harga Agen" type="tel" class="w-full text-sm" required></Input>
+        </div>
+        <div class="grid gap-2 w-full mb-4">
+            <Label for="retail-price" class="block text-left text-gray-500">Harga Jual</Label>
+            <Input id="retail-price" v-model="retailPrice" placeholder="Harga Jual" type="tel" class="w-full text-sm" required></Input>
+        </div>
+        <div class="border-b border-dashed mt-5 w-full"></div>
+        <h1 class="font-medium mb-7 mt-5">Info Stok</h1>
+        <div class="grid gap-2 w-full mb-4">
+            <Label for="stok" class="block text-left text-gray-500">Stok Produk</Label>
+            <Input id="stok" v-model="stok" placeholder="Stok Produk" type="tel" class="w-full text-sm" required></Input>
+        </div>
     </div>
     </div>
 </template>
