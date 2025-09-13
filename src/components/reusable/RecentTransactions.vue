@@ -15,7 +15,7 @@ const transactions = [
   <section class="w-full">
     <!-- Header -->
     <div class="flex justify-between items-center mb-5">
-      <h2 class="text-xl font-semibold">Transaksi Terakhir</h2>
+      <h2 class="text-base font-semibold text-gray-800">Transaksi Terakhir</h2>
       <!-- <button class="text-sm text-blue-600 hover:underline">See all</button> -->
     </div>
 

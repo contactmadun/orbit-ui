@@ -9,7 +9,7 @@ const props = defineProps({
 <template>
   <section class="w-full bg-white">
     <div class="flex justify-between items-center mb-5">
-      <h2 class="text-xl font-semibold">Laporan Transaksi Hari Ini</h2>
+      <h2 class="text-base font-semibold text-gray-800">Laporan Transaksi Hari Ini</h2>
       <!-- <button class="text-sm text-blue-600 hover:underline">See all</button> -->
     </div>
     <!-- Row 1: 2 kolom + divider vertikal + divider bawah -->

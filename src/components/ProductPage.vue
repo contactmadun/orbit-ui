@@ -193,7 +193,13 @@ const props = defineProps({
       <span class="text-xs text-gray-400">Produk habis stok</span>
     </div>
   </section>
+  <h2 class="text-base font-semibold text-gray-800 mt-2">
+        Main Menu
+  </h2>
   <MenuProduct />
+  <h2 class="text-base font-semibold text-gray-800 mt-6">
+      Daftar Produk
+  </h2>
   <!-- Tabel section -->
    <div class="p-1 w-full">
     <!-- Tabs -->
@@ -203,28 +209,6 @@ const props = defineProps({
         <TabsTrigger value="Low Stock" @click="selectedCategory = 'Aksesoris'">Low Stock</TabsTrigger>
         <TabsTrigger value="Out of Stock" @click="selectedCategory = 'Kartu'">Out of Stock</TabsTrigger>
       </TabsList>
-
-      <!-- Search & Filter -->
-      <!-- <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
-        <Input
-          v-model="search"
-          type="text"
-          placeholder="Cari produk..."
-          class="w-full md:w-1/3"
-        />
-
-        <Select v-model="selectedCategory">
-          <SelectTrigger class="w-[180px]">
-            <SelectValue placeholder="Filter kategori" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua</SelectItem>
-            <SelectItem value="Voucher">Voucher</SelectItem>
-            <SelectItem value="Aksesoris">Aksesoris</SelectItem>
-            <SelectItem value="Kartu">Kartu</SelectItem>
-          </SelectContent>
-        </Select>
-      </div> -->
 
       <!-- Table Wrapper (scroll-x) -->
       <div class="overflow-x-auto border rounded-lg">
