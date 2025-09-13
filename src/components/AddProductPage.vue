@@ -46,7 +46,7 @@ const selectedCategory  = ref(null)
         <h1 class="font-medium mb-7">Produk Info</h1>
         <div class="grid gap-2 w-full">
             <Label for="name" class="block text-left text-gray-500">Nama Produk</Label>
-            <Input id="text" v-model="name" placeholder="Voucher Data Tsel" class="w-full" required></Input>
+            <Input id="text" v-model="name" placeholder="Voucher Data Tsel" class="w-full text-sm" required></Input>
         </div>
         <div class="grid grid-cols-2 text-left">
             <!-- Kolom Penjualan -->
@@ -136,7 +136,7 @@ const selectedCategory  = ref(null)
         </div>
         <div class="grid w-full gap-1.5">
             <Label for="description" class="text-gray-500">Deskripsi Produk</Label>
-            <Textarea id="description" placeholder="Deskripsi produk" />
+            <Textarea id="description" placeholder="Deskripsi produk" class="text-sm" />
             <p class="text-sm text-muted-foreground">
             Lengkapi deskripsi produkmu.
             </p>
