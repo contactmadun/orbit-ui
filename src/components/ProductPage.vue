@@ -1,4 +1,5 @@
 <script setup> 
+import MenuProduct from './reusable/MenuProduct.vue'
 import { ref, computed } from "vue"
 import { ChevronDown } from "lucide-vue-next"
 import {
@@ -137,5 +138,6 @@ const props = defineProps({
       <span class="text-xs text-gray-400">Produk habis stok</span>
     </div>
   </section>
+  <MenuProduct />
   </div>
 </template>
