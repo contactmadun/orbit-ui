@@ -17,12 +17,12 @@ const selectedPeriod = ref("monthly")
 
 // data kategori produk
 const categories = ref([
-  { name: "Voucher", value: 15 },
-  { name: "Kartu", value: 20 },
+  { name: "Voucher", value: 150 },
+  { name: "Kartu", value: 90 },
   { name: "Aksesoris", value: 300 }, // highlight
   { name: "Pulsa", value: 100 },
-  { name: "Data", value: 8 },
-  { name: "More", value: 5 },
+  { name: "Data", value: 80 },
+  { name: "Lainnya", value: 50 },
 ])
 
 const CHART_HEIGHT_PX = 192 // h-48 -> 48 * 4 = 192px
@@ -43,7 +43,7 @@ const normalized = computed(() => {
     <!-- Header -->
     <div class="w-full flex justify-between items-center mb-4">
       <h2 class="text-base font-semibold text-gray-800">
-        Top product based on sales
+        Kategori Produk Terlaris
       </h2>
       <!-- shadcn Select -->
       <Select v-model="selectedPeriod">
@@ -61,11 +61,11 @@ const normalized = computed(() => {
     <!-- Total Sales -->
     <div>
       <p class="text-2xl font-bold text-gray-900 flex items-baseline gap-2">
-        ${{ totalSales }}K
+        Rp{{ totalSales }}K
         <span class="text-green-500 text-sm font-medium">+{{ percentage }}%</span>
       </p>
       <p class="text-sm text-gray-500">
-        Great job! You've boosted your estimate by an impressive $2,150 compared
+        Great job! You've boosted your estimate by an impressive Rp3,150 compared
         to last month!
       </p>
     </div>
