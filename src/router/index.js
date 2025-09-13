@@ -9,6 +9,7 @@ import OpenCashier from '../components/CashierSessionPage.vue'
 import CloseCashier from '../components/CloseCashierPage.vue'
 import Cashier from '../components/CashierPage.vue'
 import Product from '../components/ProductPage.vue'
+import AddProduct from '../components/AddProductPage.vue'
 
 const routes = [
     {
@@ -61,6 +62,11 @@ const routes = [
     path: '/product',
     name: 'product',
     component: Product
+    },
+    {
+    path: '/add-product',
+    name: 'addProduct',
+    component: AddProduct
     },
 ]
 

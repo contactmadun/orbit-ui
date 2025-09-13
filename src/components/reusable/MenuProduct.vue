@@ -1,9 +1,9 @@
 <script setup>
-import { ShoppingCart, Wallet, Package, MoreHorizontal } from 'lucide-vue-next'
+import { ShoppingCart, Wallet, Package, PackagePlus } from 'lucide-vue-next'
 
 // daftar menu, bisa dipakai untuk loop
 const menus = [
-  { name: 'Tambah Produk', icon: ShoppingCart, key: 'penjualan', route: '/transaction' },
+  { name: 'Produk', icon: PackagePlus, key: 'tambah produk', route: '/add-product' },
   { name: 'Brand', icon: Wallet, key: 'keuangan', route: '/report' },
   { name: 'Kategori', icon: Package, key: 'produk', route: '/product' }
 ]

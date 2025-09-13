@@ -119,7 +119,7 @@ const emailError = ref("");
 </script>
 
 <template>
-    <TopNavbar />
+    <TopNavbar title="Kasir" />
     <div class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 px-5">
         <Card class="w-full max-w-sm shadow-xs mt-5 rounded-2xl">
         <CardContent class="px-5 flex flex-col gap-3">

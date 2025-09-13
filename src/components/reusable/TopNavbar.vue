@@ -26,7 +26,7 @@ const goBack = () => {
 
     <!-- Judul -->
     <h1 class="text-lg font-semibold text-gray-800">
-      Buka Kasir
+      {{ title }}
     </h1>
   </header>
 </template>

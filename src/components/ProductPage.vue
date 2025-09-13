@@ -3,6 +3,8 @@ import MenuProduct from './reusable/MenuProduct.vue'
 import { ref, computed } from "vue"
 import { ChevronDown } from "lucide-vue-next"
 import { Input } from "@/components/ui/input"
+import TopNavbar from './reusable/TopNavbar.vue'
+
 import {
   Select,
   SelectContent,
@@ -99,6 +101,7 @@ const props = defineProps({
 </script>
 
 <template>
+  <TopNavbar title="Produk" />
   <div class="flex flex-col gap-3 items-start mb-10 pt-10 px-5">
     <!-- Header -->
     <div class="w-full flex justify-between items-center mb-4">
