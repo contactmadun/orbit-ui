@@ -36,6 +36,12 @@ const normalized = computed(() => {
     return { ...c, px }
   })
 })
+
+const props = defineProps({
+  sales: { type: Number, default: 2500 },
+  expenses: { type: Number, default: 360 }
+})
+
 </script>
 
 <template>
@@ -65,7 +71,7 @@ const normalized = computed(() => {
         <span class="text-green-500 text-sm font-medium">+{{ percentage }}%</span>
       </p>
       <p class="text-sm text-gray-500">
-        Great job! You've boosted your estimate by an impressive Rp3,150 compared
+        Great job! You've boosted your estimate by an impressive Rp3,150K compared
         to last month!
       </p>
     </div>
@@ -100,5 +106,27 @@ const normalized = computed(() => {
 
     <!-- Divider -->
     <div class="border-b mt-8 w-full"></div>
+
+    <section class="w-full bg-white">
+    <div class="grid grid-cols-2 divide-x divide-gray-200 text-left">
+      <!-- Kolom Penjualan -->
+      <div class="flex flex-col items-start py-4 px-4">
+        <span class="text-sm font-medium text-gray-800 mb-1">Total Produk</span>
+        <span class="text-lg font-bold text-gray-800 mb-2">
+          {{ sales.toLocaleString('id-ID') }}
+        </span>
+        <span class="text-xs text-gray-400">Jumlah keseluruhan produk</span>
+      </div>
+
+      <!-- Kolom Pengeluaran -->
+      <div class="flex flex-col items-start py-4 px-4">
+        <span class="text-sm font-medium text-gray-800 mb-1">Produk Terjual</span>
+        <span class="text-lg font-bold text-gray-800 mb-2">
+          {{ expenses.toLocaleString('id-ID') }}
+        </span>
+        <span class="text-xs text-gray-400">Jumlah produk terjual bulan ini</span>
+      </div>
+    </div>
+  </section>
   </div>
 </template>
