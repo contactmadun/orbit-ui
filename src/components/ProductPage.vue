@@ -39,7 +39,8 @@ const normalized = computed(() => {
 
 const props = defineProps({
   sales: { type: Number, default: 2500 },
-  expenses: { type: Number, default: 360 }
+  expenses: { type: Number, default: 360 },
+  oos: { type: Number, default: 125 }
 })
 
 </script>
@@ -110,7 +111,7 @@ const props = defineProps({
     <section class="w-full bg-white">
     <div class="grid grid-cols-2 divide-x divide-gray-200 text-left">
       <!-- Kolom Penjualan -->
-      <div class="flex flex-col items-start py-4 px-4">
+      <div class="flex flex-col items-start py-4 px-2">
         <span class="text-sm font-medium text-gray-800 mb-1">Total Produk</span>
         <span class="text-lg font-bold text-gray-800 mb-2">
           {{ sales.toLocaleString('id-ID') }}
@@ -119,13 +120,21 @@ const props = defineProps({
       </div>
 
       <!-- Kolom Pengeluaran -->
-      <div class="flex flex-col items-start py-4 px-4">
+      <div class="flex flex-col items-start py-4 px-2">
         <span class="text-sm font-medium text-gray-800 mb-1">Produk Terjual</span>
         <span class="text-lg font-bold text-gray-800 mb-2">
           {{ expenses.toLocaleString('id-ID') }}
         </span>
         <span class="text-xs text-gray-400">Jumlah produk terjual bulan ini</span>
       </div>
+    </div>
+    <div class="border-b mt-3 w-full"></div>
+    <div class="px-2 py-4">
+      <span class="text-sm font-medium text-gray-800 block mb-1">Produk Habis Stok</span>
+      <p class="text-lg font-bold text-gray-800 mb-2">
+        {{ oos.toLocaleString('id-ID') }}
+      </p>
+      <span class="text-xs text-gray-400">Produk habis stok</span>
     </div>
   </section>
   </div>
