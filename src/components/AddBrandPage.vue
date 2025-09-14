@@ -14,45 +14,67 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import TopNavbar from './reusable/TopNavbar.vue'
+import { useUserStore } from "@/stores/user"
 
-const products = ref([
-  {
-    id: 1,
-    name: "Voucher",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Kartu",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Aksesoris",
-    status: "Active",
-  },
-])
+const brands = ref([])
 
 // Search & filter
 const search = ref("")
 const selectedCategory = ref("all")
 
+const userStore = useUserStore()
+
 // Filter hasil berdasarkan search & kategori
-const filteredProducts = computed(() => {
-  return products.value.filter((p) => {
+const filteredBrands = computed(() => {
+  return brands.value.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.value.toLowerCase())
     const matchCategory = selectedCategory.value === "all" || p.category === selectedCategory.value
     return matchSearch && matchCategory
   })
 })
 
-// Form tambah kategori
-const newCategory = ref({ name: "", status: "aktif" })
-const saveCategory = () => {
-  console.log("Kategori baru:", newCategory.value)
-  // Tambahkan ke API atau state sesuai kebutuhan
-  newCategory.value = { name: "", status: "aktif" }
+// Ambil data kategori dari API
+const fetchBrands = async () => {
+  try {
+    const res = await api.get(`/brand?storeId=${userStore.storeId}`)
+    brands.value = res.data || []
+    console.log(res.data);
+    console.log("Kategori didapat:", brands.value)
+  } catch (err) {
+    console.error("Gagal mengambil kategori:", err)
+  }
 }
+
+// Form tambah kategori
+const newBrand = ref({ name: "", status: "aktif" })
+
+const saveBrand = async () => {
+  try {
+    const payload = {
+      ...newBrand.value,
+      storeId: userStore.storeId,
+    }
+
+    const res = await api.post("/brand", payload)
+    console.log("Kategori berhasil disimpan:", res.data)
+
+    // Tambahkan ke tabel lokal
+    brands.value.push({
+      id: res.data.id,
+      name: newBrand.value.name,
+      status: newBrand.value.status,
+    })
+
+    // Reset form
+    newBrand.value = { name: "", status: "aktif" }
+  } catch (err) {
+    console.error("Gagal menyimpan kategori:", err)
+  }
+}
+
+onMounted(() => {
+  fetchBrands()
+})
 
 </script>
 
@@ -75,17 +97,17 @@ const saveCategory = () => {
             <SheetTitle>Tambah Brand</SheetTitle>
             <SheetDescription>Isi detail brand baru di bawah ini</SheetDescription>
           </SheetHeader>
-          <div class="mt-4 flex flex-col gap-4">
+          <form @submit.prevent="saveBrand" class="mt-4 flex flex-col gap-4">
             <!-- Nama Kategori -->
             <div>
               <label class="text-sm font-medium">Nama Brand</label>
-              <Input v-model="newCategory.name" placeholder="Masukkan nama kategori" class="mt-1" />
+              <Input v-model="newBrand.name" placeholder="Masukkan nama brand" class="mt-1 text-sm" />
             </div>
 
             <!-- Status -->
             <div>
               <label class="text-sm font-medium">Status</label>
-              <Select v-model="newCategory.status">
+              <Select v-model="newBrand.status">
                 <SelectTrigger class="w-full mt-1">
                   <SelectValue placeholder="Pilih status" />
                 </SelectTrigger>
@@ -95,10 +117,10 @@ const saveCategory = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <SheetFooter class="mt-6 w-full">
-            <Button @click="saveCategory">Save</Button>
-          </SheetFooter>
+            <SheetFooter class="mt-6 w-full">
+              <Button type="submit" >Save</Button>
+            </SheetFooter>
+          </form>
         </SheetContent>
       </Sheet>
     </div>
@@ -113,14 +135,14 @@ const saveCategory = () => {
                       <input
                         v-model="search"
                         type="text"
-                        placeholder="Search Kategori..."
+                        placeholder="Search Brand..."
                         class="border rounded-md px-3 py-1 text-sm w-64 focus:ring focus:ring-blue-200"
                       />
     
                       <!-- Filter Status -->
                       <Select v-model="selectedCategory">
                         <SelectTrigger class="w-[125px]">
-                          <SelectValue placeholder="Filter kategori" />
+                          <SelectValue placeholder="Filter brand" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Semua</SelectItem>
@@ -132,14 +154,14 @@ const saveCategory = () => {
                   </th>
                 </tr>
                 <tr class="bg-gray-100">
-                  <th class="px-4 py-2">Nama Kategori</th>
+                  <th class="px-4 py-2">Nama Brand</th>
                   <th class="px-4 py-2">Status</th>
                   <th class="px-4 py-2">Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
-                  v-for="product in filteredProducts"
+                  v-for="product in filteredBrands"
                   :key="product.id"
                   class="border-b hover:bg-gray-50 text-sm"
                 >

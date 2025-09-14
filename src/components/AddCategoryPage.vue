@@ -14,45 +14,68 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import TopNavbar from './reusable/TopNavbar.vue'
+import { useUserStore } from "@/stores/user"
 
-const products = ref([
-  {
-    id: 1,
-    name: "Voucher",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Kartu",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Aksesoris",
-    status: "Active",
-  },
-])
+const categorys = ref([])
 
 // Search & filter
 const search = ref("")
 const selectedCategory = ref("all")
 
+// Ambil store user
+const userStore = useUserStore()
+
 // Filter hasil berdasarkan search & kategori
-const filteredProducts = computed(() => {
-  return products.value.filter((p) => {
+const filteredCategorys = computed(() => {
+  return categorys.value.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.value.toLowerCase())
     const matchCategory = selectedCategory.value === "all" || p.category === selectedCategory.value
     return matchSearch && matchCategory
   })
 })
 
+// Ambil data kategori dari API
+const fetchCategories = async () => {
+  try {
+    const res = await api.get(`/category?storeId=${userStore.storeId}`)
+    categorys.value = res.data || []
+    console.log(res.data);
+    console.log("Kategori didapat:", categorys.value)
+  } catch (err) {
+    console.error("Gagal mengambil kategori:", err)
+  }
+}
+
 // Form tambah kategori
 const newCategory = ref({ name: "", status: "aktif" })
-const saveCategory = () => {
-  console.log("Kategori baru:", newCategory.value)
-  // Tambahkan ke API atau state sesuai kebutuhan
-  newCategory.value = { name: "", status: "aktif" }
+
+const saveCategory = async () => {
+  try {
+    const payload = {
+      ...newCategory.value,
+      storeId: userStore.storeId,
+    }
+
+    const res = await api.post("/category", payload)
+    console.log("Kategori berhasil disimpan:", res.data)
+
+    // Tambahkan ke tabel lokal
+    categorys.value.push({
+      id: res.data.id,
+      name: newCategory.value.name,
+      status: newCategory.value.status,
+    })
+
+    // Reset form
+    newCategory.value = { name: "", status: "aktif" }
+  } catch (err) {
+    console.error("Gagal menyimpan kategori:", err)
+  }
 }
+
+onMounted(() => {
+  fetchCategories()
+})
 
 </script>
 
@@ -75,11 +98,11 @@ const saveCategory = () => {
             <SheetTitle>Tambah Kategori</SheetTitle>
             <SheetDescription>Isi detail kategori baru di bawah ini</SheetDescription>
           </SheetHeader>
-          <div class="mt-4 flex flex-col gap-4">
+          <form @submit.prevent="saveCategory" class="mt-4 flex flex-col gap-4">
             <!-- Nama Kategori -->
             <div>
               <label class="text-sm font-medium">Nama Kategori</label>
-              <Input v-model="newCategory.name" placeholder="Masukkan nama kategori" class="mt-1" />
+              <Input v-model="newCategory.name" placeholder="Masukkan nama kategori" class="mt-1 text-sm" />
             </div>
 
             <!-- Status -->
@@ -95,10 +118,10 @@ const saveCategory = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <SheetFooter class="mt-6 w-full">
-            <Button @click="saveCategory">Save</Button>
-          </SheetFooter>
+            <SheetFooter class="mt-6 w-full">
+              <Button type="submit">Simpan Data</Button>
+            </SheetFooter>
+          </form>
         </SheetContent>
       </Sheet>
     </div>
@@ -139,7 +162,7 @@ const saveCategory = () => {
               </thead>
               <tbody>
                 <tr
-                  v-for="product in filteredProducts"
+                  v-for="product in filteredCategorys"
                   :key="product.id"
                   class="border-b hover:bg-gray-50 text-sm"
                 >
