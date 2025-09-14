@@ -57,28 +57,28 @@ const saveCategory = () => {
 </script>
 
 <template>
-    <TopNavbar title="Kategori" />
+    <TopNavbar title="Brand" />
     <div class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 px-5">
         <h2 class="text-base font-semibold text-gray-800 mb-5">
-            Kategori
+            Brand
         </h2>
          <!-- Tombol Tambah Kategori -->
     <div class="flex justify-between w-full items-center">
       <Sheet>
         <SheetTrigger as-child>
           <Button class="flex items-center gap-2">
-            Tambah Kategori
+            Tambah Brand
           </Button>
         </SheetTrigger>
         <SheetContent side="right" class="w-[300px] sm:w-[400px] px-4">
           <SheetHeader class="-ml-4">
-            <SheetTitle>Tambah Kategori</SheetTitle>
-            <SheetDescription>Isi detail kategori baru di bawah ini</SheetDescription>
+            <SheetTitle>Tambah Brand</SheetTitle>
+            <SheetDescription>Isi detail brand baru di bawah ini</SheetDescription>
           </SheetHeader>
           <div class="mt-4 flex flex-col gap-4">
             <!-- Nama Kategori -->
             <div>
-              <label class="text-sm font-medium">Nama Kategori</label>
+              <label class="text-sm font-medium">Nama Brand</label>
               <Input v-model="newCategory.name" placeholder="Masukkan nama kategori" class="mt-1" />
             </div>
 

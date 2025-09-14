@@ -11,7 +11,7 @@ import Cashier from '../components/CashierPage.vue'
 import Product from '../components/ProductPage.vue'
 import AddProduct from '../components/AddProductPage.vue'
 import AddCategory from '../components/AddCategoryPage.vue'
-// import AddProduct from '../components/AddProductPage.vue'
+import AddBrand from '../components/AddBrandPage.vue'
 
 const routes = [
     {
@@ -74,6 +74,11 @@ const routes = [
     path: '/add-category',
     name: 'addCategory',
     component: AddCategory
+    },
+    {
+    path: '/add-brand',
+    name: 'addBrand',
+    component: AddBrand
     },
 ]
 
