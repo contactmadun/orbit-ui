@@ -1,10 +1,11 @@
 <script setup> 
+import api from '../axios'
 import MenuProduct from './reusable/MenuProduct.vue'
-import { ref, computed } from "vue"
+import { ref, computed, onMounted } from "vue"
 import { ChevronDown } from "lucide-vue-next"
 import { Input } from "@/components/ui/input"
 import TopNavbar from './reusable/TopNavbar.vue'
-
+import { useUserStore } from "@/stores/user"
 import {
   Select,
   SelectContent,
@@ -19,46 +20,23 @@ import {
   TabsContent,
 } from "@/components/ui/tabs"
 
+const userStore = useUserStore()
+
 const bestProduct = ref("Aksesoris")
 const totalSales = ref(4.956) // dalam K (ribuan)
 const percentage = ref(25)
+const CHART_HEIGHT_PX = 192 // h-48 -> 48 * 4 = 192px
 
-const selectedPeriod = ref("monthly")
 
 // Data produk
-const products = ref([
-  {
-    id: 1,
-    name: "Kabel Charger",
-    stock: 5,
-    status: "Low Stock",
-    category: "Aksesoris",
-    brand: "Anker",
-    price: 75000,
-  },
-  {
-    id: 2,
-    name: "Voucher Data 10GB",
-    stock: 200,
-    status: "Available",
-    category: "Voucher",
-    brand: "Telkomsel",
-    price: 50000,
-  },
-  {
-    id: 3,
-    name: "Kartu Perdana",
-    stock: 0,
-    status: "Out of Stock",
-    category: "Kartu",
-    brand: "XL",
-    price: 15000,
-  },
-])
-
-// Search & filter
+const products = ref([])
 const search = ref("")
 const selectedCategory = ref("all")
+const selectedPeriod = ref("monthly")
+
+const totalProducts = computed(() => products.value.length)
+
+// Search & filter
 
 // Filter hasil berdasarkan search & kategori
 const filteredProducts = computed(() => {
@@ -68,6 +46,8 @@ const filteredProducts = computed(() => {
     return matchSearch && matchCategory
   })
 })
+
+console.log(filteredProducts);
 
 
 // data kategori produk
@@ -80,7 +60,6 @@ const categories = ref([
   { name: "Lainnya", value: 50 },
 ])
 
-const CHART_HEIGHT_PX = 192 // h-48 -> 48 * 4 = 192px
 
 // normalisasi value agar tidak melebihi tinggi container
 const normalized = computed(() => {
@@ -98,6 +77,22 @@ const props = defineProps({
   oos: { type: Number, default: 125 }
 })
 
+// Fetch data produk dari API
+const fetchProducts = async () => {
+  try {
+    const res = await api.get(`/products?storeId=${userStore.storeId}`)
+    products.value = res.data // asumsi API return array produk
+    // console.log(res.data);
+    console.log("Products state:", products.value)
+    console.log("Filtered products:", filteredProducts.value)
+  } catch (err) {
+    console.error("Gagal ambil produk:", err)
+  }
+}
+
+onMounted(() => {
+  fetchProducts()
+})
 </script>
 
 <template>
@@ -170,7 +165,7 @@ const props = defineProps({
       <div class="flex flex-col items-start py-4 px-2">
         <span class="text-sm font-medium text-gray-800 mb-1">Total Produk</span>
         <span class="text-lg font-bold text-gray-800 mb-2">
-          {{ sales.toLocaleString('id-ID') }}
+          {{ totalProducts }}
         </span>
         <span class="text-xs text-gray-400">Jumlah keseluruhan produk</span>
       </div>
@@ -257,7 +252,7 @@ const props = defineProps({
               class="border-b hover:bg-gray-50 text-sm"
             >
               <td class="px-4 py-2 font-medium">{{ product.name }}</td>
-              <td class="px-4 py-2">{{ product.stock }}</td>
+              <td class="px-4 py-2">{{ product.stok }}</td>
               <td
                 class="px-4 py-2"
                 :class="{
@@ -268,9 +263,9 @@ const props = defineProps({
               >
                 {{ product.status }}
               </td>
-              <td class="px-4 py-2">{{ product.category }}</td>
-              <td class="px-4 py-2">{{ product.brand }}</td>
-              <td class="px-4 py-2">Rp{{ product.price.toLocaleString("id-ID") }}</td>
+              <td class="px-4 py-2">{{ product.categorie.name }}</td>
+              <td class="px-4 py-2">{{ product.brand.name }}</td>
+              <td class="px-4 py-2">Rp{{ product.retailPrice.toLocaleString("id-ID") }}</td>
               <td class="px-4 py-2">
                 <button class="text-blue-600 hover:underline text-xs">Edit</button>
                 <button class="text-red-600 hover:underline text-xs ml-2">Hapus</button>
