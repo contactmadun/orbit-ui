@@ -136,7 +136,7 @@ const props = defineProps({
         </CardContent>
       </Card>
        <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl">
-          <CardContent class="px-5 py-2 flex flex-col gap-4">
+          <CardContent class="px-5 flex flex-col gap-4">
             
             <!-- Header -->
             <div class="flex justify-between items-center">
@@ -148,7 +148,7 @@ const props = defineProps({
               <!-- Value -->
               <div>
                 <div class="flex items-start">
-                  <span class="text-lg text-gray-800 font-semibold">Rp</span>
+                  <span class="text-lg text-gray-500 font-semibold">Rp</span>
                   <span class="text-3xl font-bold">{{ value.toLocaleString() }}K</span>
                 </div>
                 <p class="text-sm text-gray-500 mt-4">
