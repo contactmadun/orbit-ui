@@ -3,7 +3,7 @@
 // import Input from './ui/input/Input.vue' 
 import { Card, CardContent } from './ui/card'
 import Button from './ui/button/Button.vue'
-import { Bell, User, TrendingUp } from 'lucide-vue-next'
+import { Bell, User, TrendingUp, ChevronRight } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useUserStore } from '@/stores'
@@ -16,6 +16,15 @@ import api from '../axios'
 
 const userStore = useUserStore();
 const cashierSession = ref(null)
+
+const value = 250
+const difference = -421
+const months = [
+  { name: 'Apr', value: 20 },
+  { name: 'May', value: 30 },
+  { name: 'Jun', value: 25 },
+  { name: 'Jul', value: 50, active: true }
+]
 
 const fetchCashierSession = async () => {
   if (!userStore.storeId) return
@@ -126,31 +135,45 @@ const props = defineProps({
           </div>
         </CardContent>
       </Card>
-      <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl">
-        <CardContent class="px-5 pb-2 flex flex-col gap-3">
-          <!-- Header -->
-          <div class="flex justify-between items-center">
-            <div class="flex items-center gap-2">
-            <TrendingUp class="w-5 h-5 text-gray-500" />
-            <h2 class="text-md font-medium">Keuntungan</h2>
-          </div>
-            <Button variant="outline" size="sm" class="px-4 py-5">Lihat Detail</Button>
-          </div>
-
-          <!-- Value -->
-          <div class="flex items-center gap-3">
-            <div class="flex items-baseline gap-2">
-              <span class="text-2xl font-bold">Rp250.000</span>
-              <span class="text-green-500 font-medium text-sm">+2000</span>
+       <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl">
+          <CardContent class="px-5 py-2 flex flex-col gap-4">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center">
+              <h2 class="text-md font-medium text-gray-800">Keuntungan</h2>
+              <ChevronRight class="w-4 h-4 text-gray-500" />
             </div>
-          </div>
 
-          <!-- Info -->
-          <p class="text-sm text-gray-600">
-            <span class="font-bold">120</span> transaksi selesai saat ini
-          </p>
-        </CardContent>
-      </Card>
+            <div class="flex">
+              <!-- Value -->
+              <div>
+                <div class="flex items-start">
+                  <span class="text-lg text-gray-800 font-semibold">Rp</span>
+                  <span class="text-3xl font-bold">{{ value.toLocaleString() }}K</span>
+                </div>
+                <p class="text-sm text-gray-500 mt-4">
+                  Your revenue 
+                  <span v-if="difference < 0" class="text-red-500">decreased</span>
+                  <span v-else class="text-green-500">increased</span>
+                  this month by about 
+                  <span class="font-medium text-red-500">${{ Math.abs(difference) }}</span>
+                </p>
+              </div>
+  
+              <!-- Mini Chart Dummy -->
+              <div class="flex items-end gap-3 mt-2">
+                <div v-for="m in months" :key="m.name" class="flex flex-col items-center gap-1">
+                  <div
+                    class="w-6 rounded-md"
+                    :class="m.active ? 'bg-red-500' : 'bg-gray-200'"
+                    :style="{ height: m.value + 'px' }"
+                  ></div>
+                  <span class="text-xs text-gray-500">{{ m.name }}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       <MainMenu class="mt-3" />
       <FinancialReport class="mt-5" />
       <TransactionReport class="mt-5" />
