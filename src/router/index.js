@@ -12,6 +12,7 @@ import Product from '../components/ProductPage.vue'
 import AddProduct from '../components/AddProductPage.vue'
 import AddCategory from '../components/AddCategoryPage.vue'
 import AddBrand from '../components/AddBrandPage.vue'
+import Transaction from '../components/TransactionPage.vue'
 
 const routes = [
     {
@@ -64,6 +65,11 @@ const routes = [
     path: '/product',
     name: 'product',
     component: Product
+    },
+    {
+    path: '/transaction',
+    name: 'transaction',
+    component: Transaction
     },
     {
     path: '/add-product',
