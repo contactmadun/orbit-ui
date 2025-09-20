@@ -1,21 +1,25 @@
 <script setup>
 import { Home, Wallet, BarChart2, Settings } from 'lucide-vue-next'
 import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
-const activeTab = ref('home')
+const router = useRouter()
+const route = useRoute()
+// const activeTab = ref('home')
 
 const menus = [
-  { name: 'Home', icon: Home, key: 'home' },
-  { name: 'Cashier', icon: Wallet, key: 'wallet' },
+  { name: 'Home', icon: Home, key: 'home', path: '/' },
+  { name: 'Cashier', icon: Wallet, key: 'wallet', path: '/cashier' },
   { name: 'Analytics', icon: BarChart2, key: 'analytics' },
   { name: 'Setting', icon: Settings, key: 'setting' },
 ]
 
 const handleSelect = (menu) => {
-  activeTab.value = menu.key
-  // nanti bisa sekalian pakai vue-router push
-  // router.push(`/${menu.key}`)
+  if (menu.path && route.path !== menu.path) {
+    router.push(menu.path)
+  }
 }
+
 </script>
 
 <template>
@@ -26,13 +30,13 @@ const handleSelect = (menu) => {
       v-for="menu in menus"
       :key="menu.key"
       class="flex flex-col items-center cursor-pointer transition-all"
-      :class="activeTab === menu.key ? 'text-black' : 'text-gray-400'"
+      :class="route.path === menu.path ? 'text-black' : 'text-gray-400'"
       @click="handleSelect(menu)"
     >
       <component
         :is="menu.icon"
         class="w-5 h-5 mb-1"
-        :class="activeTab === menu.key ? 'fill-black' : ''"
+        :class="route.path === menu.path ? 'fill-black' : ''"
       />
       <span class="text-xs">{{ menu.name }}</span>
     </div>

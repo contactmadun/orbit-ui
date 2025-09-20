@@ -6,6 +6,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { Eye, EyeOff } from 'lucide-vue-next'
 import { ref } from 'vue'
 import api from '../axios'
+import BottomNav from './reusable/BottomNav.vue'
+import MenuCashier from './reusable/MenuCashier.vue'
 
 
 const route = useRoute()
@@ -15,6 +17,8 @@ const router = useRouter()
 
 <template>
     <div class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-10 px-5">
+    <MenuCashier />
     <h2>Halo</h2>
     </div>
+    <BottomNav />
 </template>
