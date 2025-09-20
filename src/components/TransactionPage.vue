@@ -1,8 +1,10 @@
 <script setup>
 import { ref } from "vue"
+import Button from './ui/button/Button.vue'
+import { RouterLink } from "vue-router"
 
-const tabs = ["Pemasukan", "Pengeluaran", "Hutang pelanggan", "Hutang saya"]
-const activeTab = ref("Pemasukan")
+const tabs = ["Transaksi Produk", "Transaksi Manual", "Transfer", "Tarik Tunai"]
+const activeTab = ref("Transaksi Produk")
 </script>
 
 <template>
@@ -27,13 +29,18 @@ const activeTab = ref("Pemasukan")
 
   <!-- Content -->
   <div class="p-4">
-    <div v-if="activeTab === 'Pemasukan'">
-      <p>Konten Pemasukan</p>
+    <div v-if="activeTab === 'Transaksi Produk'">
+      <div class="flex justify-between">
+        <h4>Produk</h4>
+        <RouterLink to="/list-product">
+          <Button variant="outline">Pilih Produk</Button>
+        </RouterLink>
+      </div>
     </div>
-    <div v-else-if="activeTab === 'Pengeluaran'">
+    <div v-else-if="activeTab === 'Transaksi Manual'">
       <p>Konten Pengeluaran</p>
     </div>
-    <div v-else-if="activeTab === 'Hutang pelanggan'">
+    <div v-else-if="activeTab === 'Transfer'">
       <p>Konten Hutang pelanggan</p>
     </div>
     <div v-else>
