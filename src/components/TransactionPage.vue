@@ -3,6 +3,8 @@ import { ref, computed } from "vue"
 import Button from './ui/button/Button.vue'
 import { RouterLink } from "vue-router"
 import { useCartStore } from "@/stores/cart"
+import Label from './ui/label/Label.vue'
+import Input from './ui/input/Input.vue'
 import {
   NumberField,
   NumberFieldContent,
@@ -22,6 +24,10 @@ const cartProducts = computed(() => {
   return cartStore.products.filter(p => cartStore.cart[p.id])
 })
 
+// --- tambahan: catatan & status
+const catatan = ref("")
+const statusTransaksi = ref("Lunas") // default Lunas
+
 // fungsi update jumlah
 function updateQty(id, val) {
   if (val <= 0) {
@@ -31,6 +37,23 @@ function updateQty(id, val) {
   } else {
     cartStore.cart = { ...cartStore.cart, [id]: val }
   }
+}
+
+// total transaksi
+const totalTransaksi = computed(() => {
+  return cartProducts.value.reduce((sum, p) => {
+    return sum + (p.retailPrice * cartStore.cart[p.id])
+  }, 0)
+})
+
+// simpan transaksi
+function simpanTransaksi() {
+  console.log("Transaksi disimpan:", {
+    items: cartStore.cart,
+    total: totalTransaksi.value,
+    catatan: catatan.value,
+    status: statusTransaksi.value
+  })
 }
 </script>
 
@@ -59,7 +82,7 @@ function updateQty(id, val) {
     <div v-if="activeTab === 'Transaksi Produk'">
       <div class="flex justify-between">
         <h4>Produk</h4>
-        <RouterLink to="/list-product">
+        <RouterLink v-if="cartProducts.length === 0" to="/list-product">
           <Button variant="outline">Pilih Produk</Button>
         </RouterLink>
       </div>
@@ -70,7 +93,6 @@ function updateQty(id, val) {
             <p class="font-medium">{{ p.name }}</p>
             <p class="text-blue-600 font-semibold">
               Rp{{ p.retailPrice.toLocaleString("id-ID") }}
-              <span class="inline-block text-xs text-gray-400 ml-1">✏️</span>
             </p>
             <p class="text-sm text-gray-500">Modal : Rp{{ p.purchasePrice.toLocaleString("id-ID") }}</p>
           </div>
@@ -88,6 +110,36 @@ function updateQty(id, val) {
           </NumberField>
         </div>
       </div>
+        <div v-if="cartProducts.length > 0" class="flex justify-center mt-4">
+          <RouterLink to="/list-product">
+            <Button variant="outline">+ Tambah produk</Button>
+          </RouterLink>
+        </div>
+        <div class="mt-6 space-y-4">
+        <div class="grid gap-2 w-full">
+        <Label for="note" class="block text-left text-gray-500">Catatan</Label>
+        <Input id="note" v-model="catatan" placeholder="" class="w-full text-sm"/>
+      </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-500">Status transaksi</label>
+          <div class="flex gap-2">
+            <Button
+              :variant="statusTransaksi === 'Lunas' ? 'default' : 'outline'"
+              class="flex-1"
+              @click="statusTransaksi = 'Lunas'"
+            >
+              Lunas
+            </Button>
+            <Button
+              :variant="statusTransaksi === 'Belum Lunas' ? 'default' : 'outline'"
+              class="flex-1"
+              @click="statusTransaksi = 'Belum Lunas'"
+            >
+              Belum Lunas
+            </Button>
+          </div>
+        </div>
+       </div>
     </div>
     <div v-else-if="activeTab === 'Transaksi Manual'">
       <p>Konten Pengeluaran</p>
@@ -98,5 +150,19 @@ function updateQty(id, val) {
     <div v-else>
       <p>Konten Hutang saya</p>
     </div>
+  </div>
+  <div
+    v-if="cartProducts.length > 0"
+    class="fixed bottom-0 left-0 right-0 border-t bg-white p-4 flex justify-between items-center"
+  >
+    <div class="flex flex-col">
+      <span class="text-sm text-gray-600">Total transaksi</span>
+      <span class="font-semibold text-gray-900">
+        Rp{{ totalTransaksi.toLocaleString("id-ID") }}
+      </span>
+    </div>
+    <Button class="bg-pink-600 hover:bg-pink-700 text-white" @click="simpanTransaksi">
+      Simpan Transaksi
+    </Button>
   </div>
 </template>
