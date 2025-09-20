@@ -7,22 +7,14 @@ import { Input } from "@/components/ui/input"
 import Button from './ui/button/Button.vue'
 import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from "@/components/ui/number-field"
 import TopNavbar from './reusable/TopNavbar.vue'
+import { useRouter } from "vue-router"
 import { useUserStore } from "@/stores/user"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs"
+import { useCartStore } from "@/stores/cart"
 
+
+const router = useRouter()
 const userStore = useUserStore()
+const cartStore = useCartStore()
 
 // Data produk
 const products = ref([])
@@ -56,6 +48,12 @@ const fetchProducts = async () => {
   } catch (err) {
     console.error("Gagal ambil produk:", err)
   }
+}
+
+function lanjutPencatatan() {
+  cartStore.products = products.value
+  cartStore.cart = { ...cart.value }
+  router.push("/transaction")
 }
 
 onMounted(() => {
@@ -142,7 +140,7 @@ function updateCart(id, val) {
         Rp{{ totalPemasukan.toLocaleString("id-ID") }}
       </span>
     </div>
-    <Button class="bg-pink-600 hover:bg-pink-700 text-white">
+    <Button class="bg-pink-600 hover:bg-pink-700 text-white" @click="lanjutPencatatan">
       Lanjut pencatatan
     </Button>
   </div>
