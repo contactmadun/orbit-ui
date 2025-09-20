@@ -101,14 +101,6 @@ function updateCart(id, val) {
             <span class="text-blue-600 font-semibold">
               Rp{{ p.retailPrice.toLocaleString("id-ID") }}
             </span>
-            <svg xmlns="http://www.w3.org/2000/svg" 
-                 class="h-4 w-4 text-blue-600 cursor-pointer" 
-                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" 
-                    stroke-linejoin="round" 
-                    stroke-width="2" 
-                    d="M11 5h2M12 5v14m-7-7h14" />
-            </svg>
           </div>
           <span class="text-sm text-gray-500">
             Modal : Rp{{ p.purchasePrice.toLocaleString("id-ID") }}
