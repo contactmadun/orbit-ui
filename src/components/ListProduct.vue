@@ -39,15 +39,6 @@ const totalPemasukan = computed(() => {
   }, 0)
 })
 
-// Jika qty di cart jadi 0 → hapus produk dari cart
-watch(cart, (val) => {
-  for (const [id, qty] of Object.entries(val)) {
-    if (qty <= 0) {
-      delete cart.value[id]
-    }
-  }
-}, { deep: true })
-
 // Filter hasil berdasarkan search & kategori
 const filteredProducts = computed(() => {
   return products.value.filter((p) => {
@@ -132,7 +123,7 @@ function updateCart(id, val) {
               class="flex items-center"
               @update:modelValue="val => updateCart(p.id, val)">
               <NumberFieldContent>
-                <NumberFieldDecrement>-</NumberFieldDecrement>
+                <NumberFieldDecrement @click="cart[p.id] <= 1 ? delete cart[p.id] : cart[p.id]--">-</NumberFieldDecrement>
                 <NumberFieldInput class="w-24"/>
                 <NumberFieldIncrement>+</NumberFieldIncrement>
               </NumberFieldContent>
