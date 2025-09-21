@@ -18,7 +18,6 @@ const router = useRouter()
 <template>
     <div class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-10 px-5">
     <MenuCashier />
-    <h2>Halo</h2>
     </div>
     <BottomNav />
 </template>
