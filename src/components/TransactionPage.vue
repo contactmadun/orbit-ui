@@ -1,10 +1,13 @@
 <script setup>
-import { ref, computed } from "vue"
+import { ref, computed, onMounted } from "vue"
 import Button from './ui/button/Button.vue'
 import { RouterLink } from "vue-router"
+import { useUserStore } from '@/stores'
 import { useCartStore } from "@/stores/cart"
+import { useRouter } from 'vue-router'
 import Label from './ui/label/Label.vue'
 import Input from './ui/input/Input.vue'
+import api from '../axios'
 import {
   NumberField,
   NumberFieldContent,
@@ -13,11 +16,34 @@ import {
   NumberFieldInput
 } from "@/components/ui/number-field"
 
+
 const tabs = ["Transaksi Produk", "Transaksi Manual", "Transfer", "Tarik Tunai"]
 const activeTab = ref("Transaksi Produk")
 
 // ambil store
 const cartStore = useCartStore()
+const userStore = useUserStore();
+
+const router = useRouter();
+
+
+async function getActiveSession() {
+  try {
+    const res = await api.get(`/cashier/session/${userStore.storeId}`)
+    // if (!res.ok) throw new Error("Gagal fetch active session")
+    const data = res.data; 
+    console.log(res.data);
+
+    if (data && data.id) {
+      cartStore.cashierSessionId = data.id
+      console.log("Active cashier session set:", data.id)
+    } else {
+      console.warn("Tidak ada active session ditemukan")
+    }
+  } catch (err) {
+    console.error("Error getActiveSession:", err)
+  }
+}
 
 // produk yg ada di keranjang
 const cartProducts = computed(() => {
@@ -46,15 +72,43 @@ const totalTransaksi = computed(() => {
   }, 0)
 })
 
+//
+
 // simpan transaksi
-function simpanTransaksi() {
-  console.log("Transaksi disimpan:", {
-    items: cartStore.cart,
-    total: totalTransaksi.value,
-    catatan: catatan.value,
-    status: statusTransaksi.value
-  })
+async function simpanTransaksi() {
+  try {
+    // siapkan payload transaksi
+    const payload = {
+      storeId: userStore.storeId, // pastikan ada di store
+      cashier_session_id: cartStore.cashierSessionId, // pastikan ambil dari session aktif
+      fund_source_id: 6, // default laci atau pilihan user
+      items: cartProducts.value.map(p => ({
+        product_id: p.id,
+        qty: cartStore.cart[p.id],
+        cost_price: p.purchasePrice,
+        price: p.retailPrice,
+        total: p.retailPrice * cartStore.cart[p.id],
+        profit: (p.retailPrice - p.purchasePrice) * cartStore.cart[p.id],
+      })),
+      note: catatan.value,
+      status: statusTransaksi.value === "Lunas" ? "success" : "bon",
+      transaction_type: "penjualan",
+    }
+
+    const { data } = await api.post("/transaction", payload)
+
+    console.log("Transaksi berhasil disimpan:", data)
+    router.push("/")
+    // reset cart
+    // cartStore.clearCart()
+  } catch (err) {
+    console.error("Gagal simpan transaksi:", err)
+  }
 }
+
+onMounted(() => {
+  getActiveSession()
+})
 </script>
 
 <template>

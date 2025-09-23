@@ -121,7 +121,7 @@ const emailError = ref("");
 <template>
     <TopNavbar title="Tutup Kasir" />
     <div class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 px-5">
-        <Card class="w-full max-w-sm shadow-xs mt-5 rounded-2xl">
+        <Card class="w-full shadow-xs mt-5 rounded-2xl">
         <CardContent class="px-5 flex flex-col gap-3">
           <!-- Header -->
           <div class="flex justify-between items-center">
@@ -146,7 +146,7 @@ const emailError = ref("");
           </div>
         </CardContent>
       </Card>
-        <Card class="w-full max-w-sm shadow-xs mt-5 rounded-2xl">
+        <Card class="w-full shadow-xs mt-5 rounded-2xl">
         <CardContent class="px-5 flex flex-col gap-3">
           <!-- Header -->
           <div class="flex justify-between items-center">
@@ -169,7 +169,7 @@ const emailError = ref("");
           </div>
         </CardContent>
       </Card>
-      <Card class="w-full max-w-sm shadow-md mt-5 rounded-lg">
+      <Card class="w-full shadow-md mt-5 rounded-lg">
         <CardContent class="px-3 flex flex-col gap-3">
             <Button
                 class="w-full"

@@ -4,6 +4,7 @@ import { ref, computed } from "vue"
 export const useCartStore = defineStore("cart", () => {
   const cart = ref({}) // { id: qty }
   const products = ref([]) // simpan data produk hasil fetch
+  const cashierSessionId = ref(null)
   
   // hitung total pemasukan
   const totalPemasukan = computed(() => {
@@ -33,6 +34,7 @@ export const useCartStore = defineStore("cart", () => {
     cart,
     products,
     totalPemasukan,
+    cashierSessionId,
     cartItems,
     resetCart,
   }

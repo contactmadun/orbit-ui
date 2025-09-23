@@ -50,7 +50,7 @@ const handleLogin = async () => {
 
 <template>
     <div class="flex items-center justify-center h-screen">
-        <div class="flex flex-col items-center gap-2 text-center p-2">
+        <div class="flex flex-col items-center gap-2 text-center px-6 w-full">
             <Transition
             enter-active-class="transition transform duration-700 ease-out"
             enter-from-class="opacity-0 -translate-y-5"

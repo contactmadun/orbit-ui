@@ -108,7 +108,7 @@ const props = defineProps({
       </div>
       <Bell class="w-5 h-5 cursor-pointer" />
       </div>  
-      <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl text-white bg-gray-900">
+      <Card class="w-full shadow-md mt-5 rounded-2xl text-white bg-gray-900">
         <CardContent class="px-3 flex flex-col gap-3">
           <!-- Header -->
           <div class="flex justify-between items-center">
@@ -135,7 +135,7 @@ const props = defineProps({
           </div>
         </CardContent>
       </Card>
-       <Card class="w-full max-w-sm shadow-md mt-5 rounded-2xl">
+       <Card class="w-full shadow-md mt-5 rounded-2xl">
           <CardContent class="px-5 flex flex-col gap-4">
             
             <!-- Header -->

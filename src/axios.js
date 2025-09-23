@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 const api= axios.create({
-    // baseURL: 'http://localhost:3000/'
-    baseURL: 'https://api2.personal-assistant.biz.id/'
+    baseURL: 'http://localhost:3000/'
+    // baseURL: 'https://api2.personal-assistant.biz.id/'
 })
 
 // Interceptor: semua request otomatis pakai token
