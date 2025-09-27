@@ -45,6 +45,22 @@ async function getActiveSession() {
   }
 }
 
+
+// ambil fund default
+async function getDefaultFund() {
+  try {
+    const res = await api.get(`/fund/default/${userStore.storeId}`)
+    if (res.data && res.data.id) {
+      defaultFundId.value = res.data.id
+      console.log("Default fund source:", res.data)
+    } else {
+      console.warn("Tidak ada fund default ditemukan")
+    }
+  } catch (err) {
+    console.error("Error getDefaultFund:", err)
+  }
+}
+
 // produk yg ada di keranjang
 const cartProducts = computed(() => {
   return cartStore.products.filter(p => cartStore.cart[p.id])
@@ -53,6 +69,7 @@ const cartProducts = computed(() => {
 // --- tambahan: catatan & status
 const catatan = ref("")
 const statusTransaksi = ref("Lunas") // default Lunas
+const defaultFundId = ref(null) // fund source default dari backend
 
 // fungsi update jumlah
 function updateQty(id, val) {
@@ -81,7 +98,7 @@ async function simpanTransaksi() {
     const payload = {
       storeId: userStore.storeId, // pastikan ada di store
       cashier_session_id: cartStore.cashierSessionId, // pastikan ambil dari session aktif
-      fund_source_id: 6, // default laci atau pilihan user
+      fund_source_id: defaultFundId.value, // default laci atau pilihan user
       items: cartProducts.value.map(p => ({
         product_id: p.id,
         qty: cartStore.cart[p.id],
@@ -108,6 +125,7 @@ async function simpanTransaksi() {
 
 onMounted(() => {
   getActiveSession()
+  getDefaultFund()
 })
 </script>
 

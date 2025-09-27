@@ -1,6 +1,5 @@
 <script setup>
 // import Label from './ui/label/Label.vue'
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from './ui/sheet'
 import { Card, CardContent } from './ui/card'
 import Input from './ui/input/Input.vue'
 import Button from './ui/button/Button.vue'
@@ -12,16 +11,11 @@ import { Plus, Wallet } from 'lucide-vue-next'
 import { useUserStore  } from '@/stores'
 
 const userStore = useUserStore()
-// console.log(userStore.storeId);
-
 const router = useRouter();
 
-// const cashRegister = ref('')
-// const mobileMoney = ref('')
 const fundSources = ref([])
-const newFundName = ref('')
-const openSheet = ref(false)
-//const fundSources = ref([{ id: 1, label: 'Uang Cash', value: '' }, { id: 2, label: 'E-Wallet Dana', value: '' }])
+const totalVariance = ref(0)
+const cashierSessionId = ref(null)
 
 const fetchFundSources = async () => {
   if (!userStore.storeId) {
@@ -43,67 +37,45 @@ const fetchFundSources = async () => {
   }
 }
 
-const saveFundSource = async () => {
-  if (!newFundName.value) return
-  if (!userStore.storeId) {
-    console.error('StoreId tidak ditemukan, pastikan user sudah login')
-    return
-  }
-
+const fetchActiveSession = async () => {
   try {
-    const { data } = await api.post('fund', {
-      storeId: userStore.storeId,   // ambil dari pinia
-      name: newFundName.value
-    }, {
+    const { data } = await api.get(`/cashier/session/${userStore.storeId}`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
-
-    // tambahkan ke state lokal supaya UI langsung update
-    fundSources.value.push({
-      id: data.id,
-      label: data.name,
-      value: ''
-    })
-
-    // reset & close
-    newFundName.value = ''
-    openSheet.value = false
+    cashierSessionId.value = data?.id || null
+    console.log(cashierSessionId);
   } catch (err) {
-    console.error('Gagal simpan sumber dana:', err)
+    console.error("Gagal fetch cashier session:", err)
   }
 }
 
 onMounted(() => {
   fetchFundSources()
+  fetchActiveSession()
 })
 
-const openCashier = async () => {
-  if (!userStore.user.id || !userStore.storeId) {
-    console.error("UserId / StoreId tidak ditemukan")
+const closeCashier = async () => {
+  if (!cashierSessionId.value) {
+    console.error("Session tidak ditemukan")
     return
   }
 
   try {
-    // mapping fundSources jadi {fundSourceId, amount}
-    const fundsPayload = fundSources.value
-      .filter(f => f.value && parseFloat(f.value) > 0)
-      .map(f => ({
-        fundSourceId: f.id,
-        amount: parseFloat(f.value)
-      }))
+    const fundsPayload = fundSources.value.map(f => ({
+      fundSourceId: f.id,
+      amount: parseFloat(f.value) || 0
+    }))
 
-    const { data } = await api.post("cashier", {
-      userId: userStore.user.id,
-      storeId: userStore.storeId,
+    const { data } = await api.post("cashier/close", {
+      cashierSessionId: cashierSessionId.value,
       funds: fundsPayload
     }, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
 
-    console.log("Kasir berhasil dibuka:", data)
-    router.push("/cashier") // redirect ke halaman kasir misalnya
+    totalVariance.value = data.totalVariance
   } catch (err) {
-    console.error("Gagal membuka kasir:", err)
+    console.error("Gagal tutup kasir:", err)
   }
 }
 
@@ -111,10 +83,6 @@ const openCashier = async () => {
 const canOpenCashier = computed(() => {
   return fundSources.value.some(src => src.value && parseFloat(src.value) > 0)
 })
-
-const email = ref("")
-const msg = ref("")
-const emailError = ref("");
 
 </script>
 
@@ -146,6 +114,16 @@ const emailError = ref("");
           </div>
         </CardContent>
       </Card>
+        <Card class="w-full shadow-md mt-5 rounded-lg">
+        <CardContent class="px-3 flex flex-col gap-3">
+            <Button
+                class="w-full"
+                :disabled="!canOpenCashier"
+                @click="closeCashier">
+                Tutup Kasir
+            </Button>
+        </CardContent>
+      </Card>
         <Card class="w-full shadow-xs mt-5 rounded-2xl">
         <CardContent class="px-5 flex flex-col gap-3">
           <!-- Header -->
@@ -162,6 +140,7 @@ const emailError = ref("");
                       <Input disabled
                       class="mt-2 mb-2 text-sm"
                       type="number"
+                      v-model="totalVariance"
                       />
                   </div>
                 </div>
@@ -171,12 +150,12 @@ const emailError = ref("");
       </Card>
       <Card class="w-full shadow-md mt-5 rounded-lg">
         <CardContent class="px-3 flex flex-col gap-3">
-            <Button
-                class="w-full"
-                :disabled="!canOpenCashier"
-                @click="openCashier">
-                Tutup Kasir
-            </Button>
+            <RouterLink to="/">
+              <Button
+                class="w-full">
+                Beranda
+              </Button>
+            </RouterLink>
         </CardContent>
       </Card>
     </div>

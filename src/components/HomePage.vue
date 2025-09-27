@@ -17,7 +17,7 @@ import api from '../axios'
 const userStore = useUserStore();
 const cashierSession = ref(null)
 
-const value = 250
+const value = ref(0) //
 const difference = -421
 const months = [
   { name: 'Apr', value: 20 },
@@ -36,6 +36,20 @@ const fetchCashierSession = async () => {
     cashierSession.value = data
   } catch (err) {
     console.error("Gagal fetch cashier session:", err)
+  }
+}
+
+// 🔹 ambil profit dari API
+const fetchProfit = async () => {
+  if (!userStore.storeId) return
+  try {
+    const { data } = await api.get(`/transaction/profit/${userStore.storeId}`, {
+      headers: { Authorization: `Bearer ${userStore.token}` }
+    })
+    // backend return { totalProfit: xxx }
+    value.value = data.totalProfit || 0
+  } catch (err) {
+    console.error("Gagal fetch profit:", err)
   }
 }
 
@@ -67,6 +81,7 @@ onMounted(() => {
   updateDateTime()
   intervalId = setInterval(updateDateTime, 1000)
   fetchCashierSession()
+  fetchProfit() //
 })
 
 onUnmounted(() => {
@@ -113,7 +128,9 @@ const props = defineProps({
           <!-- Header -->
           <div class="flex justify-between items-center">
             <div class="flex flex-col gap-2">
-              <h2 class="text-base font-medium">Ayo Buka Kasir</h2>
+              <h2 class="text-base font-medium">
+                {{ isOpen ? 'Tutup Kasir' : 'Ayo Buka Kasir' }}
+              </h2>
               <p class="text-sm text-gray-400">{{ currentDateTime }}</p>
             </div>
             <div>

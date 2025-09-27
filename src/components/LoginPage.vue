@@ -67,7 +67,6 @@ const handleLogin = async () => {
                 </Alert>
             </Transition>
             <h1 class="text-2xl font-medium">Masuk akunmu sekarang</h1>
-            <h1 class="text-2xl font-medium">Masuk akunmu sekarang</h1>
             <p class="text-sm text-balance text-muted-foreground mb-4">Masukan email dan password untuk akses aplikasi</p>
 
             <form @submit.prevent="handleLogin" class="w-full">
