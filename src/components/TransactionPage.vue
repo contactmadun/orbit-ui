@@ -1,11 +1,13 @@
 <script setup>
 import { ref, computed, onMounted } from "vue"
+import { Check, ChevronsUpDown, Search } from "lucide-vue-next"
 import Button from './ui/button/Button.vue'
 import { RouterLink } from "vue-router"
 import { useUserStore } from '@/stores'
 import { useCartStore } from "@/stores/cart"
 import { useRouter } from 'vue-router'
 import Label from './ui/label/Label.vue'
+import { Switch } from "@/components/ui/switch"
 import Input from './ui/input/Input.vue'
 import api from '../axios'
 import {
@@ -15,6 +17,18 @@ import {
   NumberFieldIncrement,
   NumberFieldInput
 } from "@/components/ui/number-field"
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxList,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxItem,
+  ComboboxItemIndicator,
+  ComboboxAnchor,
+  ComboboxTrigger
+} from "@/components/ui/combobox"
+import { Textarea } from "@/components/ui/textarea"
 
 
 const tabs = ["Transaksi Produk", "Transaksi Manual", "Transfer", "Tarik Tunai"]
@@ -23,9 +37,19 @@ const activeTab = ref("Transaksi Produk")
 // ambil store
 const cartStore = useCartStore()
 const userStore = useUserStore();
-
 const router = useRouter();
 
+// --- form transaksi manual
+const retailPrice = ref("")
+const purchasePrice = ref("")
+const note = ref("")
+const funds = ref([]) // isi dari sumber dana
+const selectedFund = ref(null)
+
+// --- tarik tunai
+const nominalWd = ref("")
+const nominalAdmin = ref("")
+const adminInside = ref(false) // pakai v-model untuk Switch
 
 async function getActiveSession() {
   try {
@@ -45,6 +69,16 @@ async function getActiveSession() {
   }
 }
 
+
+// ambil fund except default
+async function getExceptDefaultFund() {
+  try {
+    const res = await api.get(`/fund/except-default/${userStore.storeId}`)
+      funds.value = res.data.map(f => ({label: f.name, value: f.id}))
+  } catch (err) {
+    console.error("Error getDefaultFund:", err)
+  }
+}
 
 // ambil fund default
 async function getDefaultFund() {
@@ -89,7 +123,58 @@ const totalTransaksi = computed(() => {
   }, 0)
 })
 
-//
+async function trxWithdrawal() {
+  try {
+    const payload = {
+      storeId: userStore.storeId,
+      cashier_session_id: cartStore.cashierSessionId,
+      fund_source_id: selectedFund.value?.value,
+      amount: Number(nominalWd.value) || 0,
+      adminFee: Number(nominalAdmin.value) || 0,
+      adminInside: adminInside.value, // true kalau admin di dalam
+      note: note.value,
+      status: "success",
+      transaction_type: "withdrawal"
+    }
+
+    // console.log(payload);
+    const { data } = await api.post("/transaction/withdrawal", payload)
+    console.log("Transaksi tarik tunai berhasil:", data)
+    router.push("/")
+  } catch (err) {
+    console.error("Gagal tarik tunai:", err)
+  }
+}
+
+// --- transaksi manual
+async function trxManual() {
+  try {
+    const payload = {
+      storeId: userStore.storeId,
+      cashier_session_id: cartStore.cashierSessionId,
+      fund_source_id: selectedFund.value?.value,
+      items: [
+        {
+          product_id: null, // manual tidak ada product id
+          qty: 1,
+          cost_price: Number(purchasePrice.value) || 0,
+          price: Number(retailPrice.value),
+          total: Number(retailPrice.value),
+          profit: Number(retailPrice.value) - (Number(purchasePrice.value) || 0)
+        }
+      ],
+      note: note.value,
+      status: "success", // manual langsung dianggap lunas
+      transaction_type: "manual"
+    }
+    // console.log(payload)
+    const { data } = await api.post("/transaction/manual", payload)
+    console.log("Transaksi manual berhasil:", data)
+    router.push("/")
+  } catch (err) {
+    console.error("Gagal transaksi manual:", err)
+  }
+}
 
 // simpan transaksi
 async function simpanTransaksi() {
@@ -126,6 +211,7 @@ async function simpanTransaksi() {
 onMounted(() => {
   getActiveSession()
   getDefaultFund()
+  getExceptDefaultFund()
 })
 </script>
 
@@ -214,13 +300,132 @@ onMounted(() => {
        </div>
     </div>
     <div v-else-if="activeTab === 'Transaksi Manual'">
-      <p>Konten Pengeluaran</p>
+      <form @submit.prevent="trxManual" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 w-full">
+    <div class="w-full">
+      <!-- Harga -->
+      <div class="grid gap-2 w-full mb-4">
+        <Label for="retail-price" class="block text-left text-gray-500">Harga Jual</Label>
+        <Input id="retail-price" v-model="retailPrice" placeholder="Harga Jual" type="tel" class="w-full text-sm" required />
+      </div>
+      <div class="grid gap-2 w-full mb-4">
+        <Label for="purchase-price" class="block text-left text-gray-500">Harga Modal (Jika Ada)</Label>
+        <Input id="purchase-price" v-model="purchasePrice" placeholder="Harga Modal" type="tel" class="w-full text-sm"/>
+      </div>
+      <div class="border-b border-dashed mt-5 mb-5 w-full"></div>
+      <div class="flex flex-col items-start py-4">
+               <Label class="block text-left text-gray-500 mb-2">Sumber Dana (Jika Ada)</Label>
+               <Combobox v-model="selectedFund" by="value">
+                 <ComboboxAnchor as-child>
+                   <ComboboxTrigger as-child>
+                     <Button variant="outline" class="w-[350px] justify-between text-gray-500 font-normal">
+                       {{ selectedFund?.label ?? 'Pilih Sumber Dana' }}
+                       <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                     </Button>
+                   </ComboboxTrigger>
+                 </ComboboxAnchor>
+     
+                 <ComboboxList class="w-[350px]">
+                   <div class="relative w-full max-w-sm items-center">
+                     <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Sumber Danaa" />
+                     <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
+                       <Search class="size-4 text-muted-foreground" />
+                     </span>
+                   </div>
+                   <ComboboxEmpty>Sumber Dana tidak ditemukan.</ComboboxEmpty>
+                   <ComboboxGroup>
+                     <ComboboxItem
+                       v-for="fund in funds"
+                       :key="fund.value"
+                       :value="fund"
+                     >
+                       {{ fund.label }}
+                       <ComboboxItemIndicator>
+                         <Check class="ml-auto h-4 w-4" />
+                       </ComboboxItemIndicator>
+                     </ComboboxItem>
+                   </ComboboxGroup>
+                 </ComboboxList>
+               </Combobox>
+             </div>
+      <div class="grid w-full gap-1.5">
+        <Label for="note" class="text-gray-500">Catatan</Label>
+        <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
+        <p class="text-sm text-muted-foreground">Catatan transaksi.</p>
+      </div>
+    </div>
+    <!-- Submit Button -->
+    <div class="w-full mt-6">
+      <Button type="submit" class="w-full text-white">Simpan Transaksi</Button>
+    </div>
+  </form>
     </div>
     <div v-else-if="activeTab === 'Transfer'">
       <p>Konten Hutang pelanggan</p>
     </div>
     <div v-else>
-      <p>Konten Hutang saya</p>
+      <form @submit.prevent="trxWithdrawal" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 w-full">
+    <div class="w-full">
+      <!-- Harga -->
+      <div class="grid gap-2 w-full mb-4">
+        <Label for="nominal" class="block text-left text-gray-500">Nominal Penarikan</Label>
+        <Input id="nominal" v-model="nominalWd" placeholder="Nominal Tarik Tunai" type="tel" class="w-full text-sm" required />
+      </div>
+      <div class="grid gap-2 w-full mb-4">
+        <Label for="nominalAdmin" class="block text-left text-gray-500">Admin</Label>
+        <Input id="nominalAdmin" v-model="nominalAdmin" placeholder="Nominal Admin" type="tel" class="w-full text-sm"/>
+      </div>
+      <div class="flex items-center space-x-2">
+        <Switch id="airplane-mode" v-model="adminInside" />
+        <Label for="airplane-mode" class="text-gray-500">Admin Di Dalam</Label>
+      </div>
+      <p class="text-sm text-muted-foreground mt-1">Default admin cash atau admin di potong</p>
+      <div class="border-b border-dashed mt-5 mb-5 w-full"></div>
+      <div class="flex flex-col items-start py-4">
+               <Label class="block text-left text-gray-500 mb-2">Tujuan Dana Penarikan</Label>
+               <Combobox v-model="selectedFund" by="value">
+                 <ComboboxAnchor as-child>
+                   <ComboboxTrigger as-child>
+                     <Button variant="outline" class="w-[350px] justify-between text-gray-500 font-normal">
+                       {{ selectedFund?.label ?? 'Pilih Sumber Dana' }}
+                       <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                     </Button>
+                   </ComboboxTrigger>
+                 </ComboboxAnchor>
+     
+                 <ComboboxList class="w-[350px]">
+                   <div class="relative w-full max-w-sm items-center">
+                     <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Sumber Danaa" />
+                     <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
+                       <Search class="size-4 text-muted-foreground" />
+                     </span>
+                   </div>
+                   <ComboboxEmpty>Sumber Dana tidak ditemukan.</ComboboxEmpty>
+                   <ComboboxGroup>
+                     <ComboboxItem
+                       v-for="fund in funds"
+                       :key="fund.value"
+                       :value="fund"
+                     >
+                       {{ fund.label }}
+                       <ComboboxItemIndicator>
+                         <Check class="ml-auto h-4 w-4" />
+                       </ComboboxItemIndicator>
+                     </ComboboxItem>
+                   </ComboboxGroup>
+                 </ComboboxList>
+               </Combobox>
+             </div>
+      <div class="grid w-full gap-1.5">
+        <Label for="note" class="text-gray-500">Catatan</Label>
+        <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
+        <p class="text-sm text-muted-foreground">Catatan transaksi.</p>
+      </div>
+    </div>
+    <!-- Submit Button -->
+    <div class="w-full mt-6">
+      <Button type="submit" class="w-full text-white">Simpan Transaksi</Button>
+    </div>
+  </form>
     </div>
   </div>
   <div
