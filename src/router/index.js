@@ -14,6 +14,8 @@ import AddCategory from '../components/AddCategoryPage.vue'
 import AddBrand from '../components/AddBrandPage.vue'
 import Transaction from '../components/TransactionPage.vue'
 import ListProduct from '../components/ListProduct.vue'
+import TopupFund from '../components/TopupFundPage.vue'
+import TransferFund from '../components/TransferFundPage.vue'
 
 const routes = [
     {
@@ -61,6 +63,16 @@ const routes = [
     path: '/cashier',
     name: 'cashierOpen',
     component: Cashier
+    },
+    {
+    path: '/topup-fund',
+    name: 'topupFund',
+    component: TopupFund
+    },
+    {
+    path: '/transfer-fund',
+    name: 'transferFund',
+    component: TransferFund
     },
     {
     path: '/product',

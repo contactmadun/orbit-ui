@@ -12,8 +12,8 @@ const loading = ref(false)
 const menus = ref([
   { name: 'Buka Kasir', icon: ShoppingCart, key: 'buka kasir', route: '/open-cashier', disabled: false },
   { name: 'Tutup Kasir', icon: Wallet, key: 'tutup kasir', route: '/close-cashier', disabled: false },
-  { name: 'Isi Saldo', icon: Package, key: 'isi saldo', route: '/product', disabled: false },
-  { name: 'Transfer Saldo', icon: MoreHorizontal, key: 'transfer saldo', route: '/other', disabled: false },
+  { name: 'Isi Saldo', icon: Package, key: 'isi saldo', route: '/topup-fund', disabled: false },
+  { name: 'Transfer Saldo', icon: MoreHorizontal, key: 'transfer saldo', route: '/transfer-fund', disabled: false },
 ])
 
 const emit = defineEmits(['select'])
