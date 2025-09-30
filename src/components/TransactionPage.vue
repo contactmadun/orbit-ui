@@ -234,7 +234,7 @@ async function simpanTransaksi() {
     console.log("Transaksi berhasil disimpan:", data)
     router.push("/")
     // reset cart
-    // cartStore.clearCart()
+    cartStore.resetCart()
   } catch (err) {
     console.error("Gagal simpan transaksi:", err)
   }
