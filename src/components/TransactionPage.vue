@@ -460,11 +460,11 @@ onMounted(() => {
             <Label for="phoneNumber" class="block text-left text-gray-500">Nomor Telepon</Label>
             <Input id="phoneNumber" v-model="phoneNumber" placeholder="Nomor Telepon" type="tel" class="w-full text-sm"/>
           </div>
+         </div>
           <div class="grid w-full gap-1.5">
           <Label for="note" class="text-gray-500">Catatan</Label>
           <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
           </div>
-         </div>
     </div>
     <!-- Submit Button -->
     <div class="w-full mt-6">
