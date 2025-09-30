@@ -116,7 +116,7 @@ function updateCart(id, val) {
     </div>
 
     <!-- List Produk -->
-    <div class="w-full flex flex-col divide-y">
+    <div class="w-full flex flex-col divide-y mb-20">
       <div 
         v-for="p in filteredProducts" 
         :key="p.id" 

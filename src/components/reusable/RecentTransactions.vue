@@ -1,14 +1,40 @@
 <script setup>
 import { ArrowUpRight, ArrowDownRight } from 'lucide-vue-next'
+import { useUserStore } from '@/stores'
+import { ref, onMounted } from 'vue'
+import api from '@/axios'
 
-// Data dummy (bisa diganti dari API/backend)
-const transactions = [
-  { id: 'TXN-001', time: '14:32', desc: 'Coffee, Pastry', amount: 45900 },
-  { id: 'TXN-002', time: '14:15', desc: 'Lunch Combo, Drink', amount: 129500 },
-  { id: 'TXN-003', time: '13:58', desc: 'Sandwich', amount: 22750 },
-  { id: 'TXN-002', time: '14:15', desc: 'Lunch Combo, Drink', amount: 129500 },
-  { id: 'TXN-003', time: '13:58', desc: 'Sandwich', amount: 22750 },
-]
+const userStore = useUserStore();
+const transactions = ref([])
+const cashierSessionId = ref(null)
+
+async function getActiveSession() {
+  try {
+    const res = await api.get(`/cashier/session/${userStore.storeId}`)
+    cashierSessionId.value = res.data?.id // sesuaikan dengan response BE
+    if (cashierSessionId.value) {
+      fetchLastTransactions()
+    }
+  } catch (err) {
+    console.error("Error getActiveSession:", err)
+  }
+}
+
+const fetchLastTransactions = async () => {
+  try {
+    const { data } = await api.get(
+      `transaction/${userStore.storeId}/${cashierSessionId.value}/last-transactions`
+    )
+    transactions.value = data
+  } catch (error) {
+    console.error("Gagal fetch transaksi terakhir:", error)
+  }
+}
+
+onMounted(() => {
+  getActiveSession()
+})
+
 </script>
 
 <template>

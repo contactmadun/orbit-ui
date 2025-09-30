@@ -16,6 +16,9 @@ import Transaction from '../components/TransactionPage.vue'
 import ListProduct from '../components/ListProduct.vue'
 import TopupFund from '../components/TopupFundPage.vue'
 import TransferFund from '../components/TransferFundPage.vue'
+import Finance from '../components/FinancePage.vue'
+import FinanceExpanse from '../components/FinanceExpanse.vue'
+import Setting from '../components/SettingPage.vue'
 
 const routes = [
     {
@@ -65,6 +68,16 @@ const routes = [
     component: Cashier
     },
     {
+    path: '/finance',
+    name: 'finance',
+    component: Finance
+    },
+    {
+    path: '/expanse',
+    name: 'expanse',
+    component: FinanceExpanse
+    },
+    {
     path: '/topup-fund',
     name: 'topupFund',
     component: TopupFund
@@ -103,6 +116,11 @@ const routes = [
     path: '/add-brand',
     name: 'addBrand',
     component: AddBrand
+    },
+    {
+    path: '/setting',
+    name: 'setting',
+    component: Setting
     },
 ]
 

@@ -194,9 +194,7 @@ const props = defineProps({
       <MainMenu class="mt-3" />
       <FinancialReport class="mt-5" />
       <TransactionReport class="mt-5" />
-      <RecentTrx class="mt-5" />  
-      <button @click="handleLogout" class="underline mt-80" :disabled="loading">{{ loading ? "Proses logout..." : "logout" }}</button>
-      <p class="mt-50">percobaan</p>
+      <RecentTrx class="mt-5 mb-20" />  
       <BottomNav />
     </div>
 </template>

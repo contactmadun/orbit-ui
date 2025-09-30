@@ -107,8 +107,11 @@ const hasInjectProduct = computed(() => {
   return cartProducts.value.some(p => p.typeProduct === "inject")
 })
 
+// --- tambahan: customer info
+const customerName = ref("")
+const phoneNumber = ref("")
+
 // --- tambahan: catatan & status
-const catatan = ref("")
 const statusTransaksi = ref("Lunas") // default Lunas
 const defaultFundId = ref(null) // fund source default dari backend
 
@@ -183,6 +186,8 @@ async function trxManual() {
       storeId: userStore.storeId,
       cashier_session_id: cartStore.cashierSessionId,
       fund_source_id: selectedFund.value?.value,
+      customerName: customerName.value,
+      phoneNumber: phoneNumber.value,
       items: [
         {
           product_id: null, // manual tidak ada product id
@@ -194,7 +199,7 @@ async function trxManual() {
         }
       ],
       note: note.value,
-      status: "success", // manual langsung dianggap lunas
+      status: statusTransaksi.value, // manual langsung dianggap lunas
       transaction_type: "manual"
     }
     // console.log(payload)
@@ -215,6 +220,8 @@ async function simpanTransaksi() {
       cashier_session_id: cartStore.cashierSessionId, // pastikan ambil dari session aktif
       fund_source_id: defaultFundId.value, // default laci atau pilihan user
       resourceFund: selectedFund.value?.value,
+      customerName: customerName.value,
+      phoneNumber: phoneNumber.value,
       items: cartProducts.value.map(p => ({
         product_id: p.id,
         qty: cartStore.cart[p.id],
@@ -223,15 +230,16 @@ async function simpanTransaksi() {
         total: p.retailPrice * cartStore.cart[p.id],
         profit: (p.retailPrice - p.purchasePrice) * cartStore.cart[p.id],
       })),
-      note: catatan.value,
-      status: statusTransaksi.value === "Lunas" ? "success" : "bon",
+      note: note.value,
+      status: statusTransaksi.value,
       transaction_type: "penjualan",
     }
 
     // console.log(payload);
     const { data } = await api.post("/transaction", payload)
-
-    console.log("Transaksi berhasil disimpan:", data)
+    customerName.value = ""
+    phoneNumber.value = ""
+    note.value = ""
     router.push("/")
     // reset cart
     cartStore.resetCart()
@@ -239,8 +247,6 @@ async function simpanTransaksi() {
     console.error("Gagal simpan transaksi:", err)
   }
 }
-
-
 
 onMounted(() => {
   getActiveSession()
@@ -343,10 +349,6 @@ onMounted(() => {
                  </ComboboxList>
                </Combobox>
              </div>
-        <div class="grid gap-2 w-full">
-        <Label for="note" class="block text-left text-gray-500">Catatan</Label>
-        <Input id="note" v-model="catatan" placeholder="" class="w-full text-sm"/>
-      </div>
         <div>
           <label class="block text-sm font-medium mb-1 text-gray-500">Status transaksi</label>
           <div class="flex gap-2">
@@ -366,7 +368,21 @@ onMounted(() => {
             </Button>
           </div>
         </div>
-       </div>
+        <div v-if="statusTransaksi === 'Belum Lunas'">
+          <div class="grid gap-2 w-full mb-4">
+          <Label for="nameCostumer" class="block text-left text-gray-500">Nama Konsumen</Label>
+          <Input id="nameCostumer" v-model="customerName" placeholder="Nama Konsumen" type="text" class="w-full text-sm" required />
+          </div>
+          <div class="grid gap-2 w-full mb-4">
+            <Label for="phoneNumber" class="block text-left text-gray-500">Nomor Telepon</Label>
+            <Input id="phoneNumber" v-model="phoneNumber" placeholder="Nomor Telepon" type="tel" class="w-full text-sm"/>
+          </div>
+          <div class="grid w-full gap-1.5">
+          <Label for="note" class="text-gray-500">Catatan</Label>
+          <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
+          </div>
+         </div>
+        </div>
     </div>
     <div v-else-if="activeTab === 'Transaksi Manual'">
       <form @submit.prevent="trxManual" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 w-full">
@@ -416,11 +432,39 @@ onMounted(() => {
                  </ComboboxList>
                </Combobox>
              </div>
-      <div class="grid w-full gap-1.5">
-        <Label for="note" class="text-gray-500">Catatan</Label>
-        <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
-        <p class="text-sm text-muted-foreground">Catatan transaksi.</p>
-      </div>
+      <div>
+          <label class="block text-sm font-medium mb-1 text-gray-500">Status transaksi</label>
+          <div class="flex gap-2 mb-5">
+            <Button
+              :variant="statusTransaksi === 'Lunas' ? 'default' : 'outline'"
+              class="flex-1"
+              @click="statusTransaksi = 'Lunas'"
+            >
+              Lunas
+            </Button>
+            <Button
+              :variant="statusTransaksi === 'Belum Lunas' ? 'default' : 'outline'"
+              class="flex-1"
+              @click="statusTransaksi = 'Belum Lunas'"
+            >
+              Belum Lunas
+            </Button>
+          </div>
+        </div>
+        <div v-if="statusTransaksi === 'Belum Lunas'">
+          <div class="grid gap-2 w-full mb-4">
+          <Label for="nameCostumer" class="block text-left text-gray-500">Nama Konsumen</Label>
+          <Input id="nameCostumer" v-model="customerName" placeholder="Nama Konsumen" type="text" class="w-full text-sm" required />
+          </div>
+          <div class="grid gap-2 w-full mb-4">
+            <Label for="phoneNumber" class="block text-left text-gray-500">Nomor Telepon</Label>
+            <Input id="phoneNumber" v-model="phoneNumber" placeholder="Nomor Telepon" type="tel" class="w-full text-sm"/>
+          </div>
+          <div class="grid w-full gap-1.5">
+          <Label for="note" class="text-gray-500">Catatan</Label>
+          <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
+          </div>
+         </div>
     </div>
     <!-- Submit Button -->
     <div class="w-full mt-6">

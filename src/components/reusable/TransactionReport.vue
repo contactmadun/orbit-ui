@@ -1,9 +1,45 @@
 <script setup>
-const props = defineProps({
-  totalTransactions: { type: Number, default: 0 },
-  totalProducts: { type: Number, default: 0 },
-  bestProduct: { type: String, default: '-' }
+import { useUserStore } from '@/stores'
+import { ref, onMounted } from 'vue'
+import api from '@/axios'
+
+
+const userStore = useUserStore();
+
+const totalTransactions = ref(0)
+const totalProducts = ref(0)
+const bestProduct = ref('-')
+const cashierSessionId = ref(null)
+
+async function getActiveSession() {
+  try {
+    const res = await api.get(`/cashier/session/${userStore.storeId}`)
+    cashierSessionId.value = res.data?.id // sesuaikan dengan response BE
+    if (cashierSessionId.value) {
+      getReport()
+    }
+  } catch (err) {
+    console.error("Error getActiveSession:", err)
+  }
+}
+
+async function getReport() {
+  try {
+    const res = await api.get(
+      `/transaction/report/${userStore.storeId}/${cashierSessionId.value}`
+    )
+    totalTransactions.value = res.data.totalTransactions
+    totalProducts.value = res.data.totalProducts
+    bestProduct.value = res.data.bestProduct
+  } catch (err) {
+    console.error("Error getReport:", err)
+  }
+}
+
+onMounted(() => {
+  getActiveSession()
 })
+
 </script>
 
 <template>
@@ -14,7 +50,7 @@ const props = defineProps({
     </div>
     <!-- Row 1: 2 kolom + divider vertikal + divider bawah -->
     <div class="grid grid-cols-2 divide-x divide-gray-200 border-b border-gray-200 text-left">
-      <div class="flex flex-col items-start py-4 px-4">
+      <div class="flex flex-col items-start py-4 px-1">
         <span class="text-sm text-gray-500 mb-1">Total transaksi</span>
         <p class="text-base font-semibold text-gray-800">
           {{ totalTransactions.toLocaleString('id-ID') }} transaksi

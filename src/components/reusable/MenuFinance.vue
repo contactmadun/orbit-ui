@@ -3,10 +3,7 @@ import { ShoppingCart, Wallet, Package, MoreHorizontal } from 'lucide-vue-next'
 
 // daftar menu, bisa dipakai untuk loop
 const menus = [
-  { name: 'Penjualan', icon: ShoppingCart, key: 'penjualan', route: '/transaction' },
-  { name: 'Keuangan', icon: Wallet, key: 'keuangan', route: '/finance' },
-  { name: 'Produk', icon: Package, key: 'produk', route: '/product' },
-  { name: 'Lainnya', icon: MoreHorizontal, key: 'lainnya', route: '/other' },
+  { name: 'Pengeluaran', icon: ShoppingCart, key: 'pengeluaran', route: '/expanse' },
 ]
 
 const emit = defineEmits(['select'])
