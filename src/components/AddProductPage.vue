@@ -6,6 +6,7 @@ import TopNavbar from './reusable/TopNavbar.vue'
 import Label from './ui/label/Label.vue'
 import Input from './ui/input/Input.vue'
 import Button from './ui/button/Button.vue'
+import { Switch } from "@/components/ui/switch"
 import {
   Combobox,
   ComboboxInput,
@@ -35,6 +36,7 @@ const stok = ref("")
 const minimumStok = ref("")
 const selectedBrand = ref(null)
 const selectedCategory = ref(null)
+const typeProduct = ref(false)
 
 // Fetch brands & categories
 const fetchBrands = async () => {
@@ -70,12 +72,14 @@ const saveProduct = async () => {
       categoryId: selectedCategory.value?.value,
       description: description.value,
       purchasePrice: purchasePrice.value,
-      agentPrice: agentPrice.value,
+      typeProduct: typeProduct.value,
+      agentPrice: agentPrice.value || 0,
       retailPrice: retailPrice.value,
-      stok: stok.value,
-      minimumStok: minimumStok.value
+      stok: stok.value || 0,
+      minimumStok: minimumStok.value || 0
     }
 
+    // console.log(payload);
     await api.post('/products', payload)
     alert("Produk berhasil disimpan ✅")
 
@@ -187,10 +191,14 @@ const saveProduct = async () => {
       </div>
 
       <!-- Deskripsi -->
-      <div class="grid w-full gap-1.5">
+      <div class="grid w-full gap-1.5 mb-4">
         <Label for="description" class="text-gray-500">Deskripsi Produk</Label>
         <Textarea id="description" v-model="description" placeholder="Deskripsi produk" class="text-sm" />
         <p class="text-sm text-muted-foreground">Lengkapi deskripsi produkmu.</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <Switch id="airplane-mode" v-model="typeProduct" />
+        <Label for="airplane-mode" class="text-gray-500">Produk Inject</Label>
       </div>
 
       <div class="border-b border-dashed mt-5 w-full"></div>
@@ -200,8 +208,9 @@ const saveProduct = async () => {
       <div class="grid gap-2 w-full mb-4">
         <Label for="purchase-price" class="block text-left text-gray-500">Harga Modal</Label>
         <Input id="purchase-price" v-model="purchasePrice" placeholder="Harga Modal" type="tel" class="w-full text-sm" required />
+        <p v-if="typeProduct" class="text-sm text-muted-foreground">Harga tanpa voucher kosong ya.</p>
       </div>
-      <div class="grid gap-2 w-full mb-4">
+      <div v-if="!typeProduct" class="grid gap-2 w-full mb-4">
         <Label for="agent-price" class="block text-left text-gray-500">Harga Agen</Label>
         <Input id="agent-price" v-model="agentPrice" placeholder="Harga Agen" type="tel" class="w-full text-sm" required />
       </div>
@@ -209,18 +218,19 @@ const saveProduct = async () => {
         <Label for="retail-price" class="block text-left text-gray-500">Harga Jual</Label>
         <Input id="retail-price" v-model="retailPrice" placeholder="Harga Jual" type="tel" class="w-full text-sm" required />
       </div>
-
-      <div class="border-b border-dashed mt-5 w-full"></div>
-
+      
       <!-- Stok -->
-      <h1 class="font-medium mb-7 mt-5">Info Stok</h1>
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="stok" class="block text-left text-gray-500">Stok Produk</Label>
-        <Input id="stok" v-model="stok" placeholder="Stok Produk" type="tel" class="w-full text-sm" required />
-      </div>
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="minimumStok" class="block text-left text-gray-500">Minimum Stok</Label>
-        <Input id="minimumStok" v-model="minimumStok" placeholder="Minimum Stok Produk" type="tel" class="w-full text-sm" required />
+      <div v-if="!typeProduct">
+        <div class="border-b border-dashed mt-5 w-full"></div>
+        <h1 class="font-medium mb-7 mt-5">Info Stok</h1>
+        <div class="grid gap-2 w-full mb-4">
+          <Label for="stok" class="block text-left text-gray-500">Stok Produk</Label>
+          <Input id="stok" v-model="stok" placeholder="Stok Produk" type="tel" class="w-full text-sm" required />
+        </div>
+        <div class="grid gap-2 w-full mb-4">
+          <Label for="minimumStok" class="block text-left text-gray-500">Minimum Stok</Label>
+          <Input id="minimumStok" v-model="minimumStok" placeholder="Minimum Stok Produk" type="tel" class="w-full text-sm" required />
+        </div>
       </div>
     </div>
 

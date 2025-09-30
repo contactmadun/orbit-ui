@@ -48,7 +48,9 @@ const selectedFund = ref(null)
 
 // --- tarik tunai
 const nominalWd = ref("")
+const nominalTf = ref("")
 const nominalAdmin = ref("")
+const nominalAdminBank = ref("")
 const adminInside = ref(false) // pakai v-model untuk Switch
 
 async function getActiveSession() {
@@ -100,6 +102,11 @@ const cartProducts = computed(() => {
   return cartStore.products.filter(p => cartStore.cart[p.id])
 })
 
+// cek apakah ada produk inject di keranjang
+const hasInjectProduct = computed(() => {
+  return cartProducts.value.some(p => p.typeProduct === "inject")
+})
+
 // --- tambahan: catatan & status
 const catatan = ref("")
 const statusTransaksi = ref("Lunas") // default Lunas
@@ -146,6 +153,29 @@ async function trxWithdrawal() {
   }
 }
 
+async function trxTransfer() {
+  try {
+    const payload = {
+      storeId: userStore.storeId,
+      cashier_session_id: cartStore.cashierSessionId,
+      fund_source_id: selectedFund.value?.value,
+      amount: Number(nominalTf.value) || 0,
+      adminFee: Number(nominalAdmin.value) || 0,
+      adminBank: Number(nominalAdminBank.value) || 0,
+      note: note.value,
+      status: "success",
+      transaction_type: "transfer"
+    }
+
+    // console.log(payload);
+    const { data } = await api.post("/transaction/transfer", payload)
+    console.log("Transaksi transfer tunai berhasil:", data)
+    router.push("/")
+  } catch (err) {
+    console.error("Gagal transfer tunai:", err)
+  }
+}
+
 // --- transaksi manual
 async function trxManual() {
   try {
@@ -184,6 +214,7 @@ async function simpanTransaksi() {
       storeId: userStore.storeId, // pastikan ada di store
       cashier_session_id: cartStore.cashierSessionId, // pastikan ambil dari session aktif
       fund_source_id: defaultFundId.value, // default laci atau pilihan user
+      resourceFund: selectedFund.value?.value,
       items: cartProducts.value.map(p => ({
         product_id: p.id,
         qty: cartStore.cart[p.id],
@@ -197,6 +228,7 @@ async function simpanTransaksi() {
       transaction_type: "penjualan",
     }
 
+    // console.log(payload);
     const { data } = await api.post("/transaction", payload)
 
     console.log("Transaksi berhasil disimpan:", data)
@@ -207,6 +239,8 @@ async function simpanTransaksi() {
     console.error("Gagal simpan transaksi:", err)
   }
 }
+
+
 
 onMounted(() => {
   getActiveSession()
@@ -274,6 +308,41 @@ onMounted(() => {
           </RouterLink>
         </div>
         <div class="mt-6 space-y-4">
+        <div v-if="hasInjectProduct" class="flex flex-col items-start mb-4">
+               <Label class="block text-left text-gray-500 mb-2">Sumber Dana Inject</Label>
+               <Combobox v-model="selectedFund" by="value">
+                 <ComboboxAnchor as-child>
+                   <ComboboxTrigger as-child>
+                     <Button variant="outline" class="w-[350px] justify-between text-gray-500 font-normal">
+                       {{ selectedFund?.label ?? 'Pilih Sumber Dana' }}
+                       <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                     </Button>
+                   </ComboboxTrigger>
+                 </ComboboxAnchor>
+     
+                 <ComboboxList class="w-[350px]">
+                   <div class="relative w-full max-w-sm items-center">
+                     <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Sumber Danaa" />
+                     <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
+                       <Search class="size-4 text-muted-foreground" />
+                     </span>
+                   </div>
+                   <ComboboxEmpty>Sumber Dana tidak ditemukan.</ComboboxEmpty>
+                   <ComboboxGroup>
+                     <ComboboxItem
+                       v-for="fund in funds"
+                       :key="fund.value"
+                       :value="fund"
+                     >
+                       {{ fund.label }}
+                       <ComboboxItemIndicator>
+                         <Check class="ml-auto h-4 w-4" />
+                       </ComboboxItemIndicator>
+                     </ComboboxItem>
+                   </ComboboxGroup>
+                 </ComboboxList>
+               </Combobox>
+             </div>
         <div class="grid gap-2 w-full">
         <Label for="note" class="block text-left text-gray-500">Catatan</Label>
         <Input id="note" v-model="catatan" placeholder="" class="w-full text-sm"/>
@@ -360,7 +429,68 @@ onMounted(() => {
   </form>
     </div>
     <div v-else-if="activeTab === 'Transfer'">
-      <p>Konten Hutang pelanggan</p>
+      <form @submit.prevent="trxTransfer" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 w-full">
+    <div class="w-full">
+      <!-- Harga -->
+      <div class="grid gap-2 w-full mb-4">
+        <Label for="nominal" class="block text-left text-gray-500">Nominal Transfer</Label>
+        <Input id="nominal" v-model="nominalTf" placeholder="Nominal Transfer" type="tel" class="w-full text-sm" required />
+      </div>
+      <div class="grid gap-2 w-full mb-4">
+        <Label for="nominalAdminBank" class="block text-left text-gray-500">Admin Bank (Jika Ada)</Label>
+        <Input id="nominalAdminBank" v-model="nominalAdminBank" placeholder="Admin Bank" type="tel" class="w-full text-sm"/>
+      </div>
+      <div class="grid gap-2 w-full mb-4">
+        <Label for="nominalAdmin" class="block text-left text-gray-500">Admin</Label>
+        <Input id="nominalAdmin" v-model="nominalAdmin" placeholder="Nominal Admin" type="tel" class="w-full text-sm"/>
+      </div>
+      <div class="border-b border-dashed mt-5 mb-5 w-full"></div>
+      <div class="flex flex-col items-start py-4">
+               <Label class="block text-left text-gray-500 mb-2">Sumber Dana Transfer</Label>
+               <Combobox v-model="selectedFund" by="value">
+                 <ComboboxAnchor as-child>
+                   <ComboboxTrigger as-child>
+                     <Button variant="outline" class="w-[350px] justify-between text-gray-500 font-normal">
+                       {{ selectedFund?.label ?? 'Pilih Sumber Dana' }}
+                       <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                     </Button>
+                   </ComboboxTrigger>
+                 </ComboboxAnchor>
+     
+                 <ComboboxList class="w-[350px]">
+                   <div class="relative w-full max-w-sm items-center">
+                     <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Sumber Danaa" />
+                     <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
+                       <Search class="size-4 text-muted-foreground" />
+                     </span>
+                   </div>
+                   <ComboboxEmpty>Sumber Dana tidak ditemukan.</ComboboxEmpty>
+                   <ComboboxGroup>
+                     <ComboboxItem
+                       v-for="fund in funds"
+                       :key="fund.value"
+                       :value="fund"
+                     >
+                       {{ fund.label }}
+                       <ComboboxItemIndicator>
+                         <Check class="ml-auto h-4 w-4" />
+                       </ComboboxItemIndicator>
+                     </ComboboxItem>
+                   </ComboboxGroup>
+                 </ComboboxList>
+               </Combobox>
+             </div>
+      <div class="grid w-full gap-1.5">
+        <Label for="note" class="text-gray-500">Catatan</Label>
+        <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
+        <p class="text-sm text-muted-foreground">Catatan transaksi.</p>
+      </div>
+    </div>
+    <!-- Submit Button -->
+    <div class="w-full mt-6">
+      <Button type="submit" class="w-full text-white">Simpan Transaksi</Button>
+    </div>
+  </form>
     </div>
     <div v-else>
       <form @submit.prevent="trxWithdrawal" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 w-full">

@@ -166,7 +166,7 @@ const props = defineProps({
               <div>
                 <div class="flex items-start">
                   <span class="text-lg text-gray-800 font-semibold">Rp</span>
-                  <span class="text-3xl font-bold">{{ value.toLocaleString() }}K</span>
+                  <span class="text-3xl font-bold">{{ value.toLocaleString() }}</span>
                 </div>
                 <p class="text-sm text-gray-500 mt-4">
                   Your revenue 
