@@ -5,6 +5,7 @@ import Button from './ui/button/Button.vue'
 import { RouterLink } from "vue-router"
 import { useUserStore } from '@/stores'
 import { useCartStore } from "@/stores/cart"
+import { useCurrencyInput } from "@/composable/useCurrencyInput"
 import { useRouter } from 'vue-router'
 import Label from './ui/label/Label.vue'
 import { Switch } from "@/components/ui/switch"
@@ -40,17 +41,17 @@ const userStore = useUserStore();
 const router = useRouter();
 
 // --- form transaksi manual
-const retailPrice = ref("")
-const purchasePrice = ref("")
+const retailPrice = useCurrencyInput()
+const purchasePrice = useCurrencyInput()
 const note = ref("")
 const funds = ref([]) // isi dari sumber dana
 const selectedFund = ref(null)
 
 // --- tarik tunai
-const nominalWd = ref("")
-const nominalTf = ref("")
-const nominalAdmin = ref("")
-const nominalAdminBank = ref("")
+const nominalWd = useCurrencyInput()
+const nominalTf = useCurrencyInput()
+const nominalAdmin = useCurrencyInput()
+const nominalAdminBank = useCurrencyInput()
 const adminInside = ref(false) // pakai v-model untuk Switch
 
 async function getActiveSession() {
@@ -139,18 +140,18 @@ async function trxWithdrawal() {
       storeId: userStore.storeId,
       cashier_session_id: cartStore.cashierSessionId,
       fund_source_id: selectedFund.value?.value,
-      amount: Number(nominalWd.value) || 0,
-      adminFee: Number(nominalAdmin.value) || 0,
+      amount: nominalWd.parse() || 0,
+      adminFee: nominalAdmin.parse() || 0,
       adminInside: adminInside.value, // true kalau admin di dalam
       note: note.value,
       status: "success",
       transaction_type: "withdrawal"
     }
 
-    // console.log(payload);
-    const { data } = await api.post("/transaction/withdrawal", payload)
-    console.log("Transaksi tarik tunai berhasil:", data)
-    router.push("/")
+    console.log(payload);
+    // const { data } = await api.post("/transaction/withdrawal", payload)
+    // console.log("Transaksi tarik tunai berhasil:", data)
+    // router.push("/")
   } catch (err) {
     console.error("Gagal tarik tunai:", err)
   }
@@ -162,9 +163,9 @@ async function trxTransfer() {
       storeId: userStore.storeId,
       cashier_session_id: cartStore.cashierSessionId,
       fund_source_id: selectedFund.value?.value,
-      amount: Number(nominalTf.value) || 0,
-      adminFee: Number(nominalAdmin.value) || 0,
-      adminBank: Number(nominalAdminBank.value) || 0,
+      amount: nominalTf.parse() || 0,
+      adminFee: nominalAdmin.parse() || 0,
+      adminBank: nominalAdminBank.parse() || 0,
       note: note.value,
       status: "success",
       transaction_type: "transfer"
@@ -192,10 +193,10 @@ async function trxManual() {
         {
           product_id: null, // manual tidak ada product id
           qty: 1,
-          cost_price: Number(purchasePrice.value) || 0,
-          price: Number(retailPrice.value),
-          total: Number(retailPrice.value),
-          profit: Number(retailPrice.value) - (Number(purchasePrice.value) || 0)
+          cost_price: purchasePrice.parse() || 0,
+          price: retailPrice.parse(),
+          total: retailPrice.parse(),
+          profit: retailPrice.parse() - (purchasePrice.parse() || 0)
         }
       ],
       note: note.value,
@@ -390,11 +391,11 @@ onMounted(() => {
       <!-- Harga -->
       <div class="grid gap-2 w-full mb-4">
         <Label for="retail-price" class="block text-left text-gray-500">Harga Jual</Label>
-        <Input id="retail-price" v-model="retailPrice" placeholder="Harga Jual" type="tel" class="w-full text-sm" required />
+        <Input id="retail-price" v-model="retailPrice.model" placeholder="Harga Jual" type="tel" class="w-full text-sm" required />
       </div>
       <div class="grid gap-2 w-full mb-4">
         <Label for="purchase-price" class="block text-left text-gray-500">Harga Modal (Jika Ada)</Label>
-        <Input id="purchase-price" v-model="purchasePrice" placeholder="Harga Modal" type="tel" class="w-full text-sm"/>
+        <Input id="purchase-price" v-model="purchasePrice.model" placeholder="Harga Modal" type="tel" class="w-full text-sm"/>
       </div>
       <div class="border-b border-dashed mt-5 mb-5 w-full"></div>
       <div class="flex flex-col items-start py-4">
@@ -478,15 +479,15 @@ onMounted(() => {
       <!-- Harga -->
       <div class="grid gap-2 w-full mb-4">
         <Label for="nominal" class="block text-left text-gray-500">Nominal Transfer</Label>
-        <Input id="nominal" v-model="nominalTf" placeholder="Nominal Transfer" type="tel" class="w-full text-sm" required />
+        <Input id="nominal" v-model="nominalTf.model" placeholder="Nominal Transfer" type="tel" class="w-full text-sm" required />
       </div>
       <div class="grid gap-2 w-full mb-4">
         <Label for="nominalAdminBank" class="block text-left text-gray-500">Admin Bank (Jika Ada)</Label>
-        <Input id="nominalAdminBank" v-model="nominalAdminBank" placeholder="Admin Bank" type="tel" class="w-full text-sm"/>
+        <Input id="nominalAdminBank" v-model="nominalAdminBank.model" placeholder="Admin Bank" type="tel" class="w-full text-sm"/>
       </div>
       <div class="grid gap-2 w-full mb-4">
         <Label for="nominalAdmin" class="block text-left text-gray-500">Admin</Label>
-        <Input id="nominalAdmin" v-model="nominalAdmin" placeholder="Nominal Admin" type="tel" class="w-full text-sm"/>
+        <Input id="nominalAdmin" v-model="nominalAdmin.model" placeholder="Nominal Admin" type="tel" class="w-full text-sm"/>
       </div>
       <div class="border-b border-dashed mt-5 mb-5 w-full"></div>
       <div class="flex flex-col items-start py-4">
@@ -542,11 +543,11 @@ onMounted(() => {
       <!-- Harga -->
       <div class="grid gap-2 w-full mb-4">
         <Label for="nominal" class="block text-left text-gray-500">Nominal Penarikan</Label>
-        <Input id="nominal" v-model="nominalWd" placeholder="Nominal Tarik Tunai" type="tel" class="w-full text-sm" required />
+        <Input id="nominal" v-model="nominalWd.model" placeholder="Nominal Tarik Tunai" type="tel" class="w-full text-sm" required />
       </div>
       <div class="grid gap-2 w-full mb-4">
         <Label for="nominalAdmin" class="block text-left text-gray-500">Admin</Label>
-        <Input id="nominalAdmin" v-model="nominalAdmin" placeholder="Nominal Admin" type="tel" class="w-full text-sm"/>
+        <Input id="nominalAdmin" v-model="nominalAdmin.model" placeholder="Nominal Admin" type="tel" class="w-full text-sm"/>
       </div>
       <div class="flex items-center space-x-2">
         <Switch id="airplane-mode" v-model="adminInside" />

@@ -10,6 +10,7 @@ import api from '../axios'
 import TopNavbar from './reusable/TopNavbar.vue'
 import { Plus, Wallet } from 'lucide-vue-next'
 import { useUserStore  } from '@/stores'
+import { useCurrencyInput } from "@/composable/useCurrencyInput"
 
 const userStore = useUserStore()
 // console.log(userStore.storeId);
@@ -36,7 +37,7 @@ const fetchFundSources = async () => {
     fundSources.value = data.map(fund => ({
       id: fund.id,
       label: fund.name,
-      value: '' // nominal default kosong
+      currency: useCurrencyInput("") // nominal default kosong
     }))
   } catch (err) {
     console.error("Gagal fetch fund sources:", err)
@@ -62,7 +63,7 @@ const saveFundSource = async () => {
     fundSources.value.push({
       id: data.id,
       label: data.name,
-      value: ''
+      currency: useCurrencyInput("")
     })
 
     // reset & close
@@ -86,12 +87,13 @@ const openCashier = async () => {
   try {
     // mapping fundSources jadi {fundSourceId, amount}
     const fundsPayload = fundSources.value
-      .filter(f => f.value && parseFloat(f.value) > 0)
+      .filter(f => f.currency.parse() > 0)
       .map(f => ({
         fundSourceId: f.id,
-        amount: parseFloat(f.value)
+        amount: f.currency.parse()
       }))
 
+    // console.log(fundsPayload);
     const { data } = await api.post("cashier", {
       userId: userStore.user.id,
       storeId: userStore.storeId,
@@ -109,7 +111,7 @@ const openCashier = async () => {
 
 //Validasi Tombol
 const canOpenCashier = computed(() => {
-  return fundSources.value.some(src => src.value && parseFloat(src.value) > 0)
+  return fundSources.value.some(src => src.currency.parse() > 0)
 })
 
 const email = ref("")
@@ -179,9 +181,9 @@ const emailError = ref("");
                       <label class="text-sm font-medium">{{ src.label }}</label>
                       <Input
                       class="mt-2 mb-2 text-sm"
-                      type="number"
+                      type="tel"
                       placeholder="Masukan Nominal"
-                      v-model="src.value"
+                      v-model="src.currency.model"
                       />
                   </div>
                   <Sheet>

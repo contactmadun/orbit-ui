@@ -9,6 +9,7 @@ import api from '../axios'
 import TopNavbar from './reusable/TopNavbar.vue'
 import { Plus, Wallet } from 'lucide-vue-next'
 import { useUserStore  } from '@/stores'
+import { useCurrencyInput } from "@/composable/useCurrencyInput"
 
 const userStore = useUserStore()
 const router = useRouter();
@@ -30,7 +31,7 @@ const fetchFundSources = async () => {
     fundSources.value = data.map(fund => ({
       id: fund.id,
       label: fund.name,
-      value: '' // nominal default kosong
+      currency: useCurrencyInput("") // nominal default kosong
     }))
   } catch (err) {
     console.error("Gagal fetch fund sources:", err)
@@ -63,7 +64,7 @@ const closeCashier = async () => {
   try {
     const fundsPayload = fundSources.value.map(f => ({
       fundSourceId: f.id,
-      amount: parseFloat(f.value) || 0
+      amount: f.currency.parse() || 0
     }))
 
     const { data } = await api.post("cashier/close", {
@@ -81,7 +82,7 @@ const closeCashier = async () => {
 
 //Validasi Tombol
 const canOpenCashier = computed(() => {
-  return fundSources.value.some(src => src.value && parseFloat(src.value) > 0)
+  return fundSources.value.some(src => src.currency.parse() > 0)
 })
 
 </script>
@@ -104,9 +105,9 @@ const canOpenCashier = computed(() => {
                       <label class="text-sm font-medium">{{ src.label }}</label>
                       <Input
                       class="mt-2 mb-2 text-sm"
-                      type="number"
+                      type="tel"
                       placeholder="Masukan Nominal"
-                      v-model="src.value"
+                      v-model="src.currency.model"
                       />
                   </div>
                 </div>
