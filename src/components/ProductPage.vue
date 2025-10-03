@@ -19,6 +19,14 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
 const userStore = useUserStore()
 
@@ -33,6 +41,10 @@ const products = ref([])
 const search = ref("")
 const selectedCategory = ref("all")
 const selectedPeriod = ref("monthly")
+// const totalProducts = ref(0)
+const currentPage = ref(1)
+const totalPages = ref(1)
+const limit = ref(5) // jumlah produk per halaman
 
 const totalProducts = computed(() => products.value.length)
 

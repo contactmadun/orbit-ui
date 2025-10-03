@@ -18,6 +18,7 @@ import TopupFund from '../components/TopupFundPage.vue'
 import TransferFund from '../components/TransferFundPage.vue'
 import Finance from '../components/FinancePage.vue'
 import FinanceExpanse from '../components/FinanceExpanse.vue'
+import FinanceIncome from '../components/FinanceIncome.vue'
 import Setting from '../components/SettingPage.vue'
 
 const routes = [
@@ -76,6 +77,11 @@ const routes = [
     path: '/expanse',
     name: 'expanse',
     component: FinanceExpanse
+    },
+    {
+    path: '/income',
+    name: 'income',
+    component: FinanceIncome
     },
     {
     path: '/topup-fund',

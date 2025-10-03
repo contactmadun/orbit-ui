@@ -66,7 +66,7 @@ onMounted(() => {
     </div>
 
     <!-- Row 2: Produk terlaris (full width) -->
-    <div class="px-4 py-4">
+    <div class="px-1 py-4">
       <span class="text-sm text-gray-500 block mb-1">Produk terlaris</span>
       <p class="text-base font-semibold text-gray-800">
         {{ bestProduct }}

@@ -1,9 +1,10 @@
 <script setup>
-import { ShoppingCart, Wallet, Package, MoreHorizontal } from 'lucide-vue-next'
+import { BanknoteArrowUp, BanknoteArrowDown } from 'lucide-vue-next'
 
 // daftar menu, bisa dipakai untuk loop
 const menus = [
-  { name: 'Pengeluaran', icon: ShoppingCart, key: 'pengeluaran', route: '/expanse' },
+  { name: 'Pemasukan', icon: BanknoteArrowUp, key: 'pemasukan', route: '/income' },
+  { name: 'Pengeluaran', icon: BanknoteArrowDown, key: 'pengeluaran', route: '/expanse' },
 ]
 
 const emit = defineEmits(['select'])

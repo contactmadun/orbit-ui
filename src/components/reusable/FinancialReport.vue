@@ -14,7 +14,7 @@ const props = defineProps({
     </div>
     <div class="grid grid-cols-2 divide-x divide-gray-200 text-left">
       <!-- Kolom Penjualan -->
-      <div class="flex flex-col items-start py-4 px-4">
+      <div class="flex flex-col items-start py-4 px-1">
         <span class="text-sm text-gray-500 mb-2">Penjualan</span>
         <span class="text-lg font-bold text-gray-800">
           Rp{{ sales.toLocaleString('id-ID') }}

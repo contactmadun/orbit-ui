@@ -52,7 +52,7 @@ async function getFund() {
 }
 
 // handle submit
-const expanse = async () => {
+const income = async () => {
   try {
     if (!activeSession.value) {
       alert("Tidak ada session aktif")
@@ -79,7 +79,7 @@ const expanse = async () => {
       note: note.value || ''
     }
     // console.log(payload);
-    const { data } = await api.post("/finance/expanse", payload, {
+    const { data } = await api.post("/finance/income", payload, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
 
@@ -104,21 +104,21 @@ getActiveSession()
 </script>
 
 <template>
-  <TopNavbar title="Catatan Pengeluaran"/>
-  <form @submit.prevent="expanse" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 px-5 w-full">
+  <TopNavbar title="Catatan Pemasukan"/>
+  <form @submit.prevent="income" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 px-5 w-full">
     <div class="w-full">
       <div class="grid gap-2 w-full">
-        <Label for="nominal" class="block text-left text-gray-500">Nominal</Label>
-        <Input id="nominal" v-model="nominal.model" placeholder="Jumlah Pengeluaran" type="tel" class="w-full text-sm" required />
+        <Label for="nominalTopup" class="block text-left text-gray-500">Nominal</Label>
+        <Input id="nominalTopup" v-model="nominal.model" placeholder="Jumlah Pemasukan" type="tel" class="w-full text-sm" required />
       </div>
       <!-- Nama Produk -->
       <div class="flex flex-col items-start py-4">
-               <Label class="block text-left text-gray-500 mb-2">Sumber Dana</Label>
+               <Label class="block text-left text-gray-500 mb-2">Tujuan Dana</Label>
                <Combobox v-model="selectedFund" by="value">
                  <ComboboxAnchor as-child>
                    <ComboboxTrigger as-child>
                      <Button variant="outline" class="w-[350px] justify-between text-gray-500 font-normal">
-                       {{ selectedFund?.label ?? 'Pilih Sumber Dana' }}
+                       {{ selectedFund?.label ?? 'Pilih Tujuan Dana' }}
                        <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
                      </Button>
                    </ComboboxTrigger>
@@ -126,7 +126,7 @@ getActiveSession()
      
                  <ComboboxList class="w-[350px]">
                    <div class="relative w-full max-w-sm items-center">
-                     <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Sumber Danaa" />
+                     <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Sumber Dana" />
                      <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
                        <Search class="size-4 text-muted-foreground" />
                      </span>
@@ -151,7 +151,8 @@ getActiveSession()
       <div class="grid w-full gap-1.5">
         <Label for="note" class="text-gray-500">Catatan</Label>
         <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
-      </div>
+         <p class="text-sm text-muted-foreground">Catatan Pemasukan akan masuk ke dalam profit hari ini.</p>
+    </div>
     </div>
     <!-- Submit Button -->
     <div class="w-full mt-6">

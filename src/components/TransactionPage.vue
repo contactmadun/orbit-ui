@@ -171,7 +171,7 @@ async function trxTransfer() {
       transaction_type: "transfer"
     }
 
-    // console.log(payload);
+    // console.log(payload); 
     const { data } = await api.post("/transaction/transfer", payload)
     console.log("Transaksi transfer tunai berhasil:", data)
     router.push("/")
