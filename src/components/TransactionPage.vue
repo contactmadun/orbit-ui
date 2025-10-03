@@ -148,10 +148,10 @@ async function trxWithdrawal() {
       transaction_type: "withdrawal"
     }
 
-    console.log(payload);
-    // const { data } = await api.post("/transaction/withdrawal", payload)
-    // console.log("Transaksi tarik tunai berhasil:", data)
-    // router.push("/")
+    // console.log(payload);
+    const { data } = await api.post("/transaction/withdrawal", payload)
+    console.log("Transaksi tarik tunai berhasil:", data)
+    router.push("/")
   } catch (err) {
     console.error("Gagal tarik tunai:", err)
   }
