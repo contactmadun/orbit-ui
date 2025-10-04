@@ -72,7 +72,7 @@ const handleSelect = (menu) => {
 
       <!-- Tombol Tengah Floating -->
       <div
-        class="absolute -top-1 left-1/2 transform -translate-x-1/2 bg-black p-3 rounded-full shadow-lg cursor-pointer"
+        class="absolute left-1/2 transform -translate-x-1/2 bg-black p-4 rounded-full shadow-lg cursor-pointer"
         @click="goTransaction"
       >
         <Scan class="w-6 h-6 text-white" />
