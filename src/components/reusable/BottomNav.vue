@@ -1,5 +1,5 @@
 <script setup>
-import { Home, Wallet, BarChart2, Settings } from 'lucide-vue-next'
+import { Home, Wallet, BarChart2, Settings, Scan } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -14,6 +14,10 @@ const menus = [
   { name: 'Setting', icon: Settings, key: 'setting', path: '/setting' },
 ]
 
+const goTransaction = () => {
+  router.push('/transaction')
+}
+
 const handleSelect = (menu) => {
   if (menu.path && route.path !== menu.path) {
     router.push(menu.path)
@@ -23,6 +27,61 @@ const handleSelect = (menu) => {
 </script>
 
 <template>
+  <nav class="fixed bottom-0 left-0 right-0 z-40">
+    <!-- SVG background dengan lekukan -->
+    <div class="relative h-20">
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        class="absolute bottom-0 left-0 w-full h-20 text-white"
+      >
+        <!-- Background navbar -->
+        <path
+          d="M0,0 L0,100 L100,100 L100,0 Q50,60 0,0"
+          fill="white"
+        />
+      </svg>
+
+      <!-- Menu kiri -->
+      <div class="absolute bottom-0 left-0 right-0 flex justify-around items-center pb-2">
+        <div
+          v-for="menu in menus.slice(0,2)"
+          :key="menu.key"
+          class="flex flex-col items-center cursor-pointer"
+          :class="route.path === menu.path ? 'text-black' : 'text-gray-400'"
+          @click="handleSelect(menu)"
+        >
+          <component :is="menu.icon" class="w-5 h-5 mb-1" />
+          <span class="text-xs">{{ menu.name }}</span>
+        </div>
+
+        <!-- Spacer untuk tombol tengah -->
+        <div class="w-16"></div>
+
+        <div
+          v-for="menu in menus.slice(2)"
+          :key="menu.key"
+          class="flex flex-col items-center cursor-pointer"
+          :class="route.path === menu.path ? 'text-black' : 'text-gray-400'"
+          @click="handleSelect(menu)"
+        >
+          <component :is="menu.icon" class="w-5 h-5 mb-1" />
+          <span class="text-xs">{{ menu.name }}</span>
+        </div>
+      </div>
+
+      <!-- Tombol Tengah Floating -->
+      <div
+        class="absolute -top-1 left-1/2 transform -translate-x-1/2 bg-black p-3 rounded-full shadow-lg cursor-pointer"
+        @click="goTransaction"
+      >
+        <Scan class="w-6 h-6 text-white" />
+      </div>
+    </div>
+  </nav>
+</template>
+
+<!-- <template>
   <nav
     class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md px-6 py-2 flex justify-between items-center"
   >
@@ -41,4 +100,4 @@ const handleSelect = (menu) => {
       <span class="text-xs">{{ menu.name }}</span>
     </div>
   </nav>
-</template>
+</template> -->
