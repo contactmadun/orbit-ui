@@ -69,7 +69,8 @@ const closeCashier = async () => {
 
     const { data } = await api.post("cashier/close", {
       cashierSessionId: cashierSessionId.value,
-      funds: fundsPayload
+      funds: fundsPayload,
+      storeId: userStore.storeId
     }, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })

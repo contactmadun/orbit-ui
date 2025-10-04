@@ -10,7 +10,7 @@ const route = useRoute()
 const menus = [
   { name: 'Home', icon: Home, key: 'home', path: '/' },
   { name: 'Cashier', icon: Wallet, key: 'wallet', path: '/cashier' },
-  { name: 'Analytics', icon: BarChart2, key: 'analytics' },
+  { name: 'Analytics', icon: BarChart2, key: 'analytics', path: '/report' },
   { name: 'Setting', icon: Settings, key: 'setting', path: '/setting' },
 ]
 

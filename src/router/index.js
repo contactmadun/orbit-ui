@@ -20,6 +20,7 @@ import Finance from '../components/FinancePage.vue'
 import FinanceExpanse from '../components/FinanceExpanse.vue'
 import FinanceIncome from '../components/FinanceIncome.vue'
 import Setting from '../components/SettingPage.vue'
+import Report from '../components/ReportPage.vue'
 
 const routes = [
     {
@@ -82,6 +83,11 @@ const routes = [
     path: '/income',
     name: 'income',
     component: FinanceIncome
+    },
+    {
+    path: '/report',
+    name: 'report',
+    component: Report
     },
     {
     path: '/topup-fund',
