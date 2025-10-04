@@ -44,9 +44,8 @@ const selectedPeriod = ref("monthly")
 // const totalProducts = ref(0)
 const currentPage = ref(1)
 const totalPages = ref(1)
-const limit = ref(5) // jumlah produk per halaman
 
-const totalProducts = computed(() => products.value.length)
+const totalProductsAll = ref(0)
 
 // Search & filter
 
@@ -90,20 +89,22 @@ const props = defineProps({
 })
 
 // Fetch data produk dari API
-const fetchProducts = async () => {
+// ambil produk dengan pagination
+const getProducts = async (page = 1) => {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
   try {
-    const res = await api.get(`/products?storeId=${userStore.storeId}`)
-    products.value = res.data // asumsi API return array produk
-    // console.log(res.data);
-    console.log("Products state:", products.value)
-    console.log("Filtered products:", filteredProducts.value)
+    const res = await api.get(`/products?storeId=${userStore.storeId}&page=${page}`)
+    products.value = res.data.data   // asumsi API return { data: [...], totalPages: N }
+    totalPages.value = res.data.totalPages || 1
+    totalProductsAll.value = res.data.totalProducts || 0
   } catch (err) {
     console.error("Gagal ambil produk:", err)
   }
 }
 
 onMounted(() => {
-  fetchProducts()
+  getProducts()
 })
 </script>
 
@@ -177,7 +178,7 @@ onMounted(() => {
       <div class="flex flex-col items-start py-4 px-2">
         <span class="text-sm font-medium text-gray-800 mb-1">Total Produk</span>
         <span class="text-lg font-bold text-gray-800 mb-2">
-          {{ totalProducts }}
+          {{ totalProductsAll }}
         </span>
         <span class="text-xs text-gray-400">Jumlah keseluruhan produk</span>
       </div>
@@ -285,6 +286,35 @@ onMounted(() => {
             </tr>
           </tbody>
         </table>
+      <Pagination v-slot="{ page }" 
+        :total="totalProductsAll" 
+        :itemsPerPage="itemsPerPage" 
+        :siblingCount="1" 
+        :defaultPage="currentPage"
+      >
+        <PaginationContent>
+          <!-- Tombol Previous -->
+          <PaginationItem>
+            <PaginationPrevious @click="getProducts(currentPage - 1)" />
+          </PaginationItem>
+
+          <!-- Nomor Halaman -->
+          <PaginationItem v-for="p in totalPages" :key="p">
+            <button
+              class="px-3 py-1 rounded-md text-sm"
+              :class="p === currentPage ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700'"
+              @click="getProducts(p)"
+            >
+              {{ p }}
+            </button>
+          </PaginationItem>
+
+          <!-- Tombol Next -->
+          <PaginationItem>
+            <PaginationNext @click="getProducts(currentPage + 1)" />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
       </div>
     </Tabs>
   </div>

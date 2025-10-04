@@ -1,5 +1,5 @@
 <script setup>
-import { ShoppingCart, Wallet, Package, MoreHorizontal } from 'lucide-vue-next'
+import { MonitorCheck, MonitorX, BanknoteArrowDown, BanknoteArrowUp } from 'lucide-vue-next'
 import api from '@/axios'
 import { ref, onMounted, watch } from 'vue'
 import { useUserStore } from '@/stores'
@@ -10,10 +10,10 @@ const loading = ref(false)
 
 // bikin menus sebagai ref agar perubahan .value dipantau oleh Vue
 const menus = ref([
-  { name: 'Buka Kasir', icon: ShoppingCart, key: 'buka kasir', route: '/open-cashier', disabled: false },
-  { name: 'Tutup Kasir', icon: Wallet, key: 'tutup kasir', route: '/close-cashier', disabled: false },
-  { name: 'Isi Saldo', icon: Package, key: 'isi saldo', route: '/topup-fund', disabled: false },
-  { name: 'Transfer Saldo', icon: MoreHorizontal, key: 'transfer saldo', route: '/transfer-fund', disabled: false },
+  { name: 'Buka Kasir', icon: MonitorCheck, key: 'buka kasir', route: '/open-cashier', disabled: false },
+  { name: 'Tutup Kasir', icon: MonitorX, key: 'tutup kasir', route: '/close-cashier', disabled: false },
+  { name: 'Isi Saldo', icon: BanknoteArrowDown, key: 'isi saldo', route: '/topup-fund', disabled: false },
+  { name: 'Transfer Saldo', icon: BanknoteArrowUp, key: 'transfer saldo', route: '/transfer-fund', disabled: false },
 ])
 
 const emit = defineEmits(['select'])

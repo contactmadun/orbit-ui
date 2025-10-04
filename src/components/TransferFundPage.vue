@@ -6,6 +6,7 @@ import TopNavbar from './reusable/TopNavbar.vue'
 import Label from './ui/label/Label.vue'
 import Input from './ui/input/Input.vue'
 import Button from './ui/button/Button.vue'
+import { useCurrencyInput } from "@/composable/useCurrencyInput"
 import {
   Combobox,
   ComboboxInput,
@@ -26,7 +27,7 @@ const userStore = useUserStore()
 const funds = ref([]) // isi dari sumber dana
 const sourceFund = ref(null)
 const targetFund = ref(null)
-const nominal = ref("")
+const nominal = useCurrencyInput()
 const note = ref("")
 const activeSession = ref(null)
 
@@ -65,8 +66,8 @@ const transferFund = async () => {
     }
 
     // bersihkan input (remove thousand separators, currency symbols)
-    const cleaned = String(nominal.value).replace(/[^0-9.-]+/g, '')
-    const amount = parseFloat(cleaned)
+    // const cleaned = String(nominal.value).replace(/[^0-9.-]+/g, '')
+    const amount = nominal.parse()
     if (isNaN(amount) || amount <= 0) {
       alert("Nominal tidak valid")
       return
@@ -110,7 +111,7 @@ onMounted(() => {
       <!-- Nominal -->
       <div class="grid gap-2 w-full">
         <Label for="nominalTransfer" class="block text-left text-gray-500">Jumlah Saldo</Label>
-        <Input id="nominalTransfer" v-model="nominal" placeholder="Jumlah Saldo" type="tel" class="w-full text-sm" required />
+        <Input id="nominalTransfer" v-model="nominal.model" placeholder="Jumlah Saldo" type="tel" class="w-full text-sm" required />
       </div>
 
       <!-- Sumber Dana -->

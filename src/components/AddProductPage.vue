@@ -7,6 +7,7 @@ import Label from './ui/label/Label.vue'
 import Input from './ui/input/Input.vue'
 import Button from './ui/button/Button.vue'
 import { Switch } from "@/components/ui/switch"
+import { useCurrencyInput } from "@/composable/useCurrencyInput"
 import {
   Combobox,
   ComboboxInput,
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/combobox"
 import { Textarea } from "@/components/ui/textarea"
 import { useUserStore } from "@/stores/user"
+import router from '@/router'
 
 const userStore = useUserStore()
 
@@ -29,9 +31,9 @@ const categories = ref([])
 
 const name = ref("")
 const description = ref("")
-const purchasePrice = ref("")
-const agentPrice = ref("")
-const retailPrice = ref("")
+const purchasePrice = useCurrencyInput()
+const agentPrice = useCurrencyInput()
+const retailPrice = useCurrencyInput()
 const stok = ref("")
 const minimumStok = ref("")
 const selectedBrand = ref(null)
@@ -71,10 +73,10 @@ const saveProduct = async () => {
       brandId: selectedBrand.value?.value,
       categoryId: selectedCategory.value?.value,
       description: description.value,
-      purchasePrice: purchasePrice.value,
+      purchasePrice: purchasePrice.parse(),
       typeProduct: typeProduct.value,
-      agentPrice: agentPrice.value || 0,
-      retailPrice: retailPrice.value,
+      agentPrice: agentPrice.parse() || 0,
+      retailPrice: retailPrice.parse(),
       stok: stok.value || 0,
       minimumStok: minimumStok.value || 0
     }
@@ -82,13 +84,13 @@ const saveProduct = async () => {
     // console.log(payload);
     await api.post('/products', payload)
     alert("Produk berhasil disimpan ✅")
-
+    router.push('/product');
     // reset form
     name.value = ""
     description.value = ""
-    purchasePrice.value = ""
-    agentPrice.value = ""
-    retailPrice.value = ""
+    purchasePrice.reset() 
+    agentPrice.reset()
+    retailPrice.reset()
     stok.value = ""
     minimumStok.value = ""
     selectedBrand.value = null
@@ -207,16 +209,16 @@ const saveProduct = async () => {
       <h1 class="font-medium mb-7 mt-5">Info Harga</h1>
       <div class="grid gap-2 w-full mb-4">
         <Label for="purchase-price" class="block text-left text-gray-500">Harga Modal</Label>
-        <Input id="purchase-price" v-model="purchasePrice" placeholder="Harga Modal" type="tel" class="w-full text-sm" required />
+        <Input id="purchase-price" v-model="purchasePrice.model" placeholder="Harga Modal" type="tel" class="w-full text-sm" required />
         <p v-if="typeProduct" class="text-sm text-muted-foreground">Harga tanpa voucher kosong ya.</p>
       </div>
       <div v-if="!typeProduct" class="grid gap-2 w-full mb-4">
         <Label for="agent-price" class="block text-left text-gray-500">Harga Agen</Label>
-        <Input id="agent-price" v-model="agentPrice" placeholder="Harga Agen" type="tel" class="w-full text-sm" required />
+        <Input id="agent-price" v-model="agentPrice.model" placeholder="Harga Agen" type="tel" class="w-full text-sm" required />
       </div>
       <div class="grid gap-2 w-full mb-4">
         <Label for="retail-price" class="block text-left text-gray-500">Harga Jual</Label>
-        <Input id="retail-price" v-model="retailPrice" placeholder="Harga Jual" type="tel" class="w-full text-sm" required />
+        <Input id="retail-price" v-model="retailPrice.model" placeholder="Harga Jual" type="tel" class="w-full text-sm" required />
       </div>
       
       <!-- Stok -->

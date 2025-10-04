@@ -17,6 +17,10 @@ export function useCurrencyInput(initial = "") {
   const model = ref(initial)
 
   watch(model, (newVal, oldVal) => {
+    if(!newVal){
+      return
+    }
+    
     // Ambil angka mentah
     const numeric = newVal ? newVal.toString().replace(/\D/g, "") : ""
 
@@ -32,5 +36,6 @@ export function useCurrencyInput(initial = "") {
   return {
     model,
     parse: () => parseCurrency(model.value),
+    reset: () => { model.value = "" }
   }
 }
