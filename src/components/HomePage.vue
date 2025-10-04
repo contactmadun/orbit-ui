@@ -170,7 +170,7 @@ const props = defineProps({
                 <div class="flex items-start">
                   <span class="text-lg text-gray-800 font-semibold">Rp</span>
                   <span v-if="loadingSkelton" class="ml-1 h-8 w-32 bg-gray-200 rounded animate-pulse"></span>
-                  <span class="text-3xl font-bold">{{ value.toLocaleString() }}</span>
+                  <span class="text-3xl font-bold">{{ value ? value.toLocaleString() : '' }}</span>
                 </div>
                 <p class="text-sm text-gray-500 mt-4">
                   Your revenue 
