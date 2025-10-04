@@ -32,6 +32,7 @@ const search = ref("")
 const selectedCategory = ref("all")
 const selectedType = ref("all") // "all" | "stok" | "inject"
 const cart = ref({}) 
+const loadingSkelton = ref(true)
 
 // Hitung total pemasukan
 const totalPemasukan = computed(() => {
@@ -59,6 +60,8 @@ const fetchProducts = async () => {
     products.value = res.data // asumsi API return array produk
   } catch (err) {
     console.error("Gagal ambil produk:", err)
+  } finally {
+    loadingSkelton.value = false;
   }
 }
 
@@ -114,9 +117,26 @@ function updateCart(id, val) {
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
+    <!-- Skeleton saat loading -->
+    <div v-if="loadingSkelton" class="w-full flex flex-col divide-y mb-20">
+      <div 
+        v-for="n in 6" 
+        :key="n" 
+        class="flex justify-between items-center py-3 animate-pulse"
+      >
+        <!-- Info produk skeleton -->
+        <div class="flex flex-col gap-2 w-2/3">
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+          <div class="h-3 bg-gray-200 rounded w-1/4"></div>
+        </div>
+        <!-- Tombol skeleton -->
+        <div class="h-8 w-20 bg-gray-200 rounded"></div>
+      </div>
+    </div>
 
     <!-- List Produk -->
-    <div class="w-full flex flex-col divide-y mb-20">
+    <div v-else class="w-full flex flex-col divide-y mb-20">
       <div 
         v-for="p in filteredProducts" 
         :key="p.id" 

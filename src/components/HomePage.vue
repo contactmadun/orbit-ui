@@ -93,20 +93,6 @@ onUnmounted(() => {
 
 const isOpen = computed(() => cashierSession.value?.status === "open")
 
-const handleLogout = async () => {
-  try {
-    loading.value = true
-    // hapus token di localStorage
-    localStorage.removeItem("token")
-    // redirect ke login
-    router.push("/login")
-  } catch (error) {
-    console.log(error);
-  } finally {
-    loading.value = false
-  }
-}
-
 const props = defineProps({
   title: { type: String, required: true},
   value: { type: Number, required: true},
