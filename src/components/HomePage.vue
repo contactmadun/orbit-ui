@@ -47,7 +47,7 @@ const fetchProfit = async () => {
       headers: { Authorization: `Bearer ${userStore.token}` }
     })
     // backend return { totalProfit: xxx }
-    value.value = data.totalProfit || 0
+    value.value = data.totalProfit
   } catch (err) {
     console.error("Gagal fetch profit:", err)
   } finally {
