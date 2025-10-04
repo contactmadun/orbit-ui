@@ -50,11 +50,14 @@ const fetchProfit = async () => {
     value.value = data.totalProfit || 0
   } catch (err) {
     console.error("Gagal fetch profit:", err)
+  } finally {
+    loadingSkelton.value = false;
   }
 }
 
 const router = useRouter()
 const loading = ref(false)
+const loadingSkelton = ref(true)
 
 const currentDateTime = ref('')
 
@@ -166,6 +169,7 @@ const props = defineProps({
               <div>
                 <div class="flex items-start">
                   <span class="text-lg text-gray-800 font-semibold">Rp</span>
+                  <span v-if="loadingSkelton" class="ml-1 h-8 w-32 bg-gray-200 rounded animate-pulse"></span>
                   <span class="text-3xl font-bold">{{ value.toLocaleString() }}</span>
                 </div>
                 <p class="text-sm text-gray-500 mt-4">

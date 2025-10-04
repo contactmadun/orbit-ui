@@ -55,7 +55,7 @@ const filteredProducts = computed(() => {
 // Fetch data produk dari API
 const fetchProducts = async () => {
   try {
-    const res = await api.get(`/products?storeId=${userStore.storeId}`)
+    const res = await api.get(`/products/all?storeId=${userStore.storeId}`)
     products.value = res.data // asumsi API return array produk
   } catch (err) {
     console.error("Gagal ambil produk:", err)
