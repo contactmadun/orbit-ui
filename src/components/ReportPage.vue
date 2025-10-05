@@ -170,8 +170,8 @@ watch(dateRange, fetchReport)
               <!-- Value -->
               <div>
                 <div class="flex items-start">
-                  <span v-if="loadingSkelton" class="ml-1 h-8 w-32 bg-gray-200 rounded animate-pulse"></span>
                   <span class="text-3xl font-bold">Rp{{ value ? value.toLocaleString() : '' }}</span>
+                  <span v-if="loadingSkelton" class="ml-1 h-8 w-32 bg-gray-200 rounded animate-pulse"></span>
                 </div>
                 <div class="mt-5">
                   <p class="text-gray-400 text-xs">
