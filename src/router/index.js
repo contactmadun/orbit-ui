@@ -21,6 +21,7 @@ import FinanceExpanse from '../components/FinanceExpanse.vue'
 import FinanceIncome from '../components/FinanceIncome.vue'
 import Setting from '../components/SettingPage.vue'
 import Report from '../components/ReportPage.vue'
+import ListBon from '../components/ListBonPage.vue'
 
 const routes = [
     {
@@ -108,6 +109,11 @@ const routes = [
     path: '/list-product',
     name: 'listProduct',
     component: ListProduct
+    },
+    {
+    path: '/list-bon',
+    name: 'listBon',
+    component: ListBon
     },
     {
     path: '/transaction',
