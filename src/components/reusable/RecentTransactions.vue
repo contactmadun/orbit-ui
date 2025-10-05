@@ -3,7 +3,9 @@ import { ArrowUpRight, ArrowDownRight } from 'lucide-vue-next'
 import { useUserStore } from '@/stores'
 import { ref, onMounted } from 'vue'
 import api from '@/axios'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const userStore = useUserStore();
 const transactions = ref([])
 const cashierSessionId = ref(null)
@@ -34,6 +36,14 @@ const fetchLastTransactions = async () => {
   }
 }
 
+const handleHistory = async () => {
+  try {
+    router.push("/history")
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 onMounted(() => {
   getActiveSession()
 })
@@ -45,7 +55,7 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex justify-between items-center mb-5">
       <h2 class="text-base font-semibold text-gray-800">Transaksi Terakhir</h2>
-      <!-- <button class="text-sm text-blue-600 hover:underline">See all</button> -->
+      <button @click="handleHistory" class="text-sm text-gray-600 hover:underline">Lihat Semua</button>
     </div>
 
        <!-- Skeleton Loading -->

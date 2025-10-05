@@ -22,6 +22,7 @@ import FinanceIncome from '../components/FinanceIncome.vue'
 import Setting from '../components/SettingPage.vue'
 import Report from '../components/ReportPage.vue'
 import ListBon from '../components/ListBonPage.vue'
+import History from '../components/HistoryPage.vue'
 
 const routes = [
     {
@@ -34,6 +35,11 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login
+    },
+    {
+    path: '/history',
+    name: 'History',
+    component: History
     },
     {
     path: '/forgot-password',
