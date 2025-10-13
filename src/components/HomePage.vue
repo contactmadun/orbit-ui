@@ -36,6 +36,8 @@ const fetchCashierSession = async () => {
     cashierSession.value = data
   } catch (err) {
     console.error("Gagal fetch cashier session:", err)
+  } finally {
+    loadingSkelton.value = false;
   }
 }
 
@@ -113,41 +115,56 @@ const props = defineProps({
       <Bell class="w-5 h-5 cursor-pointer" />
       </div>  
       <Card class="w-full shadow-md mt-5 rounded-2xl text-white bg-gray-900">
-        <CardContent class="px-3 flex flex-col gap-3">
-          <!-- Header -->
-          <div class="flex justify-between items-center">
-            <div class="flex flex-col gap-2">
-              <h2 class="text-base font-medium">
-                {{ isOpen ? 'Tutup Kasir' : 'Ayo Buka Kasir' }}
-              </h2>
-              <p class="text-sm text-gray-400">{{ currentDateTime }}</p>
-            </div>
-            <div>
-              <RouterLink
-                v-if="isOpen"
-                to="/close-cashier">
-                <Button variant="outline" size="sm" class="px-4 py-5 text-black">Tutup Kasir</Button>
-              </RouterLink>
-
-              <RouterLink
-                v-else
-                to="/open-cashier">
-                <Button variant="outline" size="sm" class="px-4 py-5 text-black">Buka Kasir</Button>
-              </RouterLink>
-            </div>
-            <!-- <RouterLink to="/open-cashier">
-              <Button variant="outline" size="sm" class="px-4 py-5 text-black">Buka Kasir</Button>
-            </RouterLink> -->
+    <CardContent class="px-3 flex flex-col gap-3">
+      <!-- Skeleton state -->
+      <template v-if="loadingSkelton">
+        <div class="flex justify-between items-center animate-pulse">
+          <div class="flex flex-col gap-2 w-1/2">
+            <div class="h-5 bg-gray-700 rounded w-3/4"></div>
+            <div class="h-4 bg-gray-700 rounded w-1/2"></div>
           </div>
-        </CardContent>
-      </Card>
+          <div class="h-10 w-24 bg-gray-700 rounded"></div>
+        </div>
+      </template>
+
+      <!-- Real content -->
+      <template v-else>
+        <div class="flex justify-between items-center">
+          <div class="flex flex-col gap-2">
+            <h2 class="text-base font-medium">
+              {{ isOpen ? 'Tutup Kasir' : 'Ayo Buka Kasir' }}
+            </h2>
+            <p class="text-sm text-gray-400">{{ currentDateTime }}</p>
+          </div>
+
+          <div>
+            <RouterLink
+              v-if="isOpen"
+              to="/close-cashier">
+              <Button variant="outline" size="sm" class="px-4 py-5 text-black">
+                Tutup Kasir
+              </Button>
+            </RouterLink>
+
+            <RouterLink
+              v-else
+              to="/open-cashier">
+              <Button variant="outline" size="sm" class="px-4 py-5 text-black">
+                Buka Kasir
+              </Button>
+            </RouterLink>
+          </div>
+        </div>
+      </template>
+    </CardContent>
+  </Card>
        <Card class="w-full shadow-md mt-5 rounded-2xl">
           <CardContent class="px-5 flex flex-col gap-4">
             
             <!-- Header -->
             <div class="flex justify-between items-center">
               <h2 class="text-md font-medium text-gray-800">Keuntungan</h2>
-              <ChevronRight class="w-4 h-4 text-gray-500" />
+              <!-- <ChevronRight class="w-4 h-4 text-gray-500" /> -->
             </div>
 
             <div class="flex">
