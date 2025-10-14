@@ -23,6 +23,7 @@ import Setting from '../components/SettingPage.vue'
 import Report from '../components/ReportPage.vue'
 import ListBon from '../components/ListBonPage.vue'
 import History from '../components/HistoryPage.vue'
+import EditProduct from '../components/reusable/EditOrAddProduct.vue'
 
 const routes = [
     {
@@ -130,6 +131,11 @@ const routes = [
     path: '/add-product',
     name: 'addProduct',
     component: AddProduct
+    },
+    {
+    path: '/edit-product/:id',
+    name: 'editProduct',
+    component: EditProduct
     },
     {
     path: '/add-category',
