@@ -17,14 +17,12 @@ import api from '../axios'
 const userStore = useUserStore();
 const cashierSession = ref(null)
 
-const value = ref(0) //
-const difference = -421
-const months = [
-  { name: 'Apr', value: 20 },
-  { name: 'May', value: 30 },
-  { name: 'Jun', value: 25 },
-  { name: 'Jul', value: 50, active: true }
-]
+const months = ref([]) // ganti nama jadi `days` mungkin lebih cocok
+const loading = ref(true)
+const profitToday = ref(0)
+const totalProfit = ref(0)
+const difference = ref(0) 
+const isIncrease = ref(false)
 
 const fetchCashierSession = async () => {
   if (!userStore.storeId) return
@@ -42,23 +40,29 @@ const fetchCashierSession = async () => {
 }
 
 // 🔹 ambil profit dari API
-const fetchProfit = async () => {
-  if (!userStore.storeId) return
-  try {
-    const { data } = await api.get(`/transaction/profit/${userStore.storeId}`, {
-      headers: { Authorization: `Bearer ${userStore.token}` }
-    })
-    // backend return { totalProfit: xxx }
-    value.value = data.totalProfit
-  } catch (err) {
-    console.error("Gagal fetch profit:", err)
-  } finally {
-    loadingSkelton.value = false;
+const fetchProfitToday = async () => {
+  const { data } = await api.get(`/transaction/profit/${userStore.storeId}`, {
+    headers: { Authorization: `Bearer ${userStore.token}` }
+  })
+  return data.totalProfit || 0
+}
+
+const fetchReport = async () => {
+  const end = new Date()
+  const start = new Date()
+  start.setDate(end.getDate() - 4)
+
+  const params = {
+    storeId: userStore.storeId,
+    startDate: start.toISOString(),
+    endDate: end.toISOString()
   }
+
+  const { data } = await api.get("/report/profit-limit", { params })
+  return data.data || []
 }
 
 const router = useRouter()
-const loading = ref(false)
 const loadingSkelton = ref(true)
 
 const currentDateTime = ref('')
@@ -80,13 +84,59 @@ const updateDateTime = () => {
   currentDateTime.value = formatter.format(now)
 }
 
+const loadData = async () => {
+  try {
+    loading.value = true
+    const [reports, todayProfit] = await Promise.all([
+      fetchReport(),
+      fetchProfitToday()
+    ])
+
+    profitToday.value = todayProfit
+
+    // mapping data dari reports (3 hari)
+    const mappedReports = reports.map(r => ({
+      name: new Date(r.date).getDate(),
+      value: parseFloat(r.totalProfit),
+      active: false
+    }))
+
+    // tambahkan data hari ini
+    const today = new Date()
+    mappedReports.push({
+      name: today.getDate(),
+      value: todayProfit,
+      active: true // highlight hari ini
+    })
+
+    months.value = mappedReports
+    console.log(months.value);
+
+    // total profit = semua digabung
+    totalProfit.value = mappedReports.reduce((a, b) => a + b.value, 0)
+
+    // bandingkan profit hari ini dengan kemarin
+    const yesterday = mappedReports[mappedReports.length - 2]?.value || 0
+    difference.value = todayProfit - yesterday
+    isIncrease.value = todayProfit > yesterday
+  } catch (err) {
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+}
+
 let intervalId
+
+const maxValue = computed(() => {
+  return Math.max(...months.value.map(m => m.value || 0)) || 1
+})
 
 onMounted(() => {
   updateDateTime()
   intervalId = setInterval(updateDateTime, 1000)
   fetchCashierSession()
-  fetchProfit() //
+  loadData()
 })
 
 onUnmounted(() => {
@@ -159,45 +209,52 @@ const props = defineProps({
     </CardContent>
   </Card>
        <Card class="w-full shadow-md mt-5 rounded-2xl">
-          <CardContent class="px-5 flex flex-col gap-4">
-            
-            <!-- Header -->
-            <div class="flex justify-between items-center">
-              <h2 class="text-md font-medium text-gray-800">Keuntungan</h2>
-              <!-- <ChevronRight class="w-4 h-4 text-gray-500" /> -->
+        <CardContent class="px-5 flex flex-col gap-4">
+          <div class="flex justify-between items-center">
+            <h2 class="text-md font-medium text-gray-800">Keuntungan</h2>
+          </div>
+
+          <div class="flex">
+            <div>
+              <div class="flex items-start">
+                <span class="text-lg text-gray-800 font-semibold">Rp</span>
+                <span v-if="loading" class="ml-1 h-8 w-32 bg-gray-200 rounded animate-pulse"></span>
+                <span v-else class="text-3xl font-bold">{{ profitToday.toLocaleString() }}</span>
+              </div>
+              <p class="text-sm text-gray-500 mt-4">
+                Keuntunganmu
+                <span :class="difference < 0 ? 'text-red-500' : 'text-green-800'">
+                  {{ difference < 0 ? 'kurang' : 'bertambah' }}
+                </span>
+                hari ini sebesar
+                <span class="font-medium" :class="difference < 0 ? 'text-red-500' : 'text-green-800'">
+                  Rp{{ Math.abs(difference).toLocaleString() }}
+                </span>
+                dari hari kemarin
+              </p>
             </div>
 
-            <div class="flex">
-              <!-- Value -->
-              <div>
-                <div class="flex items-start">
-                  <span class="text-lg text-gray-800 font-semibold">Rp</span>
-                  <span v-if="loadingSkelton" class="ml-1 h-8 w-32 bg-gray-200 rounded animate-pulse"></span>
-                  <span class="text-3xl font-bold">{{ value ? value.toLocaleString() : '' }}</span>
-                </div>
-                <p class="text-sm text-gray-500 mt-4">
-                  Your revenue 
-                  <span v-if="difference < 0" class="text-red-500">decreased</span>
-                  <span v-else class="text-green-500">increased</span>
-                  this month by about 
-                  <span class="font-medium text-red-500">${{ Math.abs(difference) }}</span>
-                </p>
-              </div>
-  
-              <!-- Mini Chart Dummy -->
-              <div class="flex items-end gap-3 mt-2">
-                <div v-for="m in months" :key="m.name" class="flex flex-col items-center gap-1">
-                  <div
-                    class="w-6 rounded-md"
-                    :class="m.active ? 'bg-red-500' : 'bg-gray-200'"
-                    :style="{ height: m.value + 'px' }"
-                  ></div>
-                  <span class="text-xs text-gray-500">{{ m.name }}</span>
-                </div>
+            <div class="flex items-end gap-3 mt-2">
+              <div
+                v-for="m in months"
+                :key="m.name"
+                class="flex flex-col items-center gap-1"
+              >
+                <div
+                  class="w-5 rounded-md transition-all duration-300"
+                  :class="[
+                    m.active
+                      ? (isIncrease ? 'bg-green-800' : 'bg-red-500')
+                      : 'bg-gray-300'
+                  ]"
+                  :style="{ height: (m.value / maxValue) * 60 + 'px' }"
+                ></div>
+                <span class="text-xs text-gray-500">{{ m.name }}</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
       <MainMenu class="mt-3" />
       <FinancialReport class="mt-5" />
       <TransactionReport class="mt-5" />
