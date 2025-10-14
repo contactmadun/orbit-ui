@@ -50,7 +50,7 @@ const fetchProfitToday = async () => {
 const fetchReport = async () => {
   const end = new Date()
   const start = new Date()
-  start.setDate(end.getDate() - 4)
+  start.setDate(end.getDate() - 3)
 
   const params = {
     storeId: userStore.storeId,
