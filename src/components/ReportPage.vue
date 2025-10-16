@@ -109,7 +109,7 @@ watch(dateRange, fetchReport)
     <Card
       class="relative overflow-hidden w-full max-w-md rounded-2xl bg-gradient-to-b from-white to-gray-50 shadow-lg border border-gray-200"
     >
-      <div class="flex justify-between items-start p-5 pb-0">
+      <div class="flex justify-between items-start px-5 pb-0">
         <Popover>
           <PopoverTrigger as-child>
             <Button
