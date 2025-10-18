@@ -112,15 +112,16 @@ const saveProduct = async () => {
       minimumStok: minimumStok.value || 0
     }
 
-    if (isEditMode) {
-      await api.put(`/products/${productId}`, payload)
-      alert("Produk berhasil diperbarui ✅")
-    } else {
-      await api.post('/products', payload)
-      alert("Produk berhasil disimpan ✅")
-    }
+    console.log(payload);
+    // if (isEditMode) {
+    //   await api.put(`/products/${productId}`, payload)
+    //   alert("Produk berhasil diperbarui ✅")
+    // } else {
+    //   await api.post('/products', payload)
+    //   alert("Produk berhasil disimpan ✅")
+    // }
 
-    router.push('/product')
+    // router.push('/product')
   } catch (err) {
     console.error("Error simpan produk:", err)
     alert("Gagal menyimpan produk ❌")

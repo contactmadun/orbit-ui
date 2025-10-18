@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue"
+import { useRouter } from "vue-router"
 import { ChevronDown, ChevronUp } from "lucide-vue-next"
 import { Card } from "@/components/ui/card"
 import TopNavbar from './reusable/TopNavbar.vue'
@@ -7,6 +8,7 @@ import { useUserStore } from '@/stores'
 import api from "../axios"
 
 const userStore = useUserStore()
+const router = useRouter()
 const transactionHistory = ref([])
 const openIndex = ref(null)
 const isLoading = ref(false)
@@ -22,6 +24,11 @@ const formatRupiah = (num) =>
   new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" })
     .format(num)
     .replace(",00", "")
+
+// Navigasi ke detail transaksi
+const goToDetail = (trx) => {
+  router.push(`/transaction/${trx.id}`)
+}
 
 // Ambil data dari API
 const fetchTransactions = async () => {
@@ -90,7 +97,8 @@ onMounted(() => {
               <div
                 v-for="trx in day.transactions"
                 :key="trx.id"
-                class="flex justify-between items-start border-b last:border-none py-3"
+                @click="goToDetail(trx)"
+                class="flex justify-between items-start border-b last:border-none py-3 cursor-pointer hover:bg-gray-50 transition"
               >
                 <div class="flex flex-col">
                   <span class="font-medium text-gray-800">{{ trx.title }}</span>
@@ -110,15 +118,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-5px);
-}
-</style>

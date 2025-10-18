@@ -24,6 +24,7 @@ import Report from '../components/ReportPage.vue'
 import ListBon from '../components/ListBonPage.vue'
 import History from '../components/HistoryPage.vue'
 import EditProduct from '../components/reusable/EditOrAddProduct.vue'
+import TransactionDetail from '../components/TransactionDetail.vue'
 
 const routes = [
     {
@@ -126,6 +127,11 @@ const routes = [
     path: '/transaction',
     name: 'transaction',
     component: Transaction
+    },
+    {
+    path: '/transaction/:id',
+    name: 'TransactionDetail',
+    component: TransactionDetail
     },
     {
     path: '/add-product',
