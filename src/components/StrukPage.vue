@@ -13,6 +13,7 @@ const isPrinting = ref(false)
 const bluetoothDevice = ref(null)
 const printerServer = ref(null)
 
+// --- Upload & OCR ---
 const handleFileChange = (e) => {
   const file = e.target.files[0]
   if (!file) return
@@ -23,10 +24,8 @@ const handleFileChange = (e) => {
 const handleUpload = async () => {
   if (!image.value) return alert("Pilih gambar terlebih dahulu!")
   isUploading.value = true
-
   const formData = new FormData()
   formData.append("image", image.value)
-
   try {
     const res = await api.post("/ocr", formData)
     parsed.value = res.data
@@ -38,30 +37,39 @@ const handleUpload = async () => {
   }
 }
 
-// === Fungsi Print Bluetooth Thermal (ESC/POS) ===
+// --- Bluetooth Printing ---
 const connectBluetooth = async () => {
   try {
     bluetoothDevice.value = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: [0x18F0, 0xFF00], // beberapa printer ESC/POS pakai FF00
+      filters: [{ services: [0x18f0] }, { services: [0xff00] }],
+      optionalServices: [0x18f0, 0xff00],
     })
     const server = await bluetoothDevice.value.gatt.connect()
     printerServer.value = server
-    alert("Printer berhasil terhubung!")
+    alert("✅ Printer berhasil terhubung!")
   } catch (error) {
     console.error(error)
-    alert("Gagal menghubungkan printer Bluetooth!")
+    alert("❌ Gagal menghubungkan printer Bluetooth! Pastikan printer dalam mode BLE dan dekat dengan perangkat.")
   }
 }
 
 const printToBluetooth = async () => {
-  if (!printerServer.value) return connectBluetooth()
   if (!parsed.value) return alert("Tidak ada data untuk dicetak")
-
+  if (!printerServer.value) return connectBluetooth()
   isPrinting.value = true
+
   try {
-    const service = await printerServer.value.getPrimaryService(0xFF00)
-    const characteristic = await service.getCharacteristic(0xFF01)
+    let service, characteristic
+
+    // deteksi otomatis service printer
+    try {
+      service = await printerServer.value.getPrimaryService(0x18f0)
+      characteristic = await service.getCharacteristic(0x2af1)
+    } catch {
+      // fallback ke FF00 (beberapa printer lawas)
+      service = await printerServer.value.getPrimaryService(0xff00)
+      characteristic = await service.getCharacteristic(0xff01)
+    }
 
     const text = `
 MINI ATM BERSAMA
@@ -82,19 +90,19 @@ BAYAR LISTRIK, PDAM, TOP UP E-WALLET
 TERIMAKASIH\n\n\n
 `
 
+    // konversi ke byte
     const encoder = new TextEncoder()
-    const data = encoder.encode(text)
-    await characteristic.writeValue(data)
+    const data = encoder.encode("\x1B\x40" + text + "\n\n\n\x1D\x56\x41")
 
-    alert("Struk berhasil dikirim ke printer!")
+    await characteristic.writeValue(data)
+    alert("✅ Struk berhasil dikirim ke printer!")
   } catch (err) {
-    console.error(err)
-    alert("Gagal mencetak struk ke printer!")
+    console.error("Error print:", err)
+    alert("❌ Gagal mencetak struk ke printer! Periksa koneksi Bluetooth atau UUID printer.")
   } finally {
     isPrinting.value = false
   }
 }
-
 </script>
 
 <template>
@@ -116,7 +124,6 @@ TERIMAKASIH\n\n\n
         </label>
       </div>
 
-      <!-- Preview -->
       <div v-if="preview" class="mt-4">
         <img :src="preview" alt="preview" class="w-full rounded-lg shadow" />
       </div>
@@ -131,7 +138,7 @@ TERIMAKASIH\n\n\n
       </button>
     </div>
 
-    <!-- Preview Struk -->
+    <!-- Struk -->
     <div
       v-if="parsed"
       id="print-area"
@@ -190,7 +197,7 @@ TERIMAKASIH\n\n\n
     display: none !important;
   }
   #print-area {
-    width: 58mm !important; /* ukuran kertas thermal */
+    width: 58mm !important;
     margin: 0 auto;
     border: none;
     box-shadow: none;
