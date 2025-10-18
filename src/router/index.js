@@ -25,6 +25,7 @@ import ListBon from '../components/ListBonPage.vue'
 import History from '../components/HistoryPage.vue'
 import EditProduct from '../components/reusable/EditOrAddProduct.vue'
 import TransactionDetail from '../components/TransactionDetail.vue'
+import StrukPage from '../components/StrukPage.vue'
 
 const routes = [
     {
@@ -92,6 +93,11 @@ const routes = [
     path: '/income',
     name: 'income',
     component: FinanceIncome
+    },
+    {
+    path: '/struk',
+    name: 'struk',
+    component: StrukPage
     },
     {
     path: '/report',

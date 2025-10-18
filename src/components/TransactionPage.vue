@@ -186,7 +186,8 @@ async function trxManual() {
     const payload = {
       storeId: userStore.storeId,
       cashier_session_id: cartStore.cashierSessionId,
-      fund_source_id: selectedFund.value?.value,
+      fund_source_id: defaultFundId.value,
+      resourceFund: selectedFund.value?.value,
       customerName: customerName.value,
       phoneNumber: phoneNumber.value,
       items: [

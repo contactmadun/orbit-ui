@@ -148,7 +148,10 @@ onMounted(fetchUserData)
         </div>
         <span class="text-gray-400 text-sm">›</span>
       </button>
-      <button class="flex items-center justify-between w-full px-5 py-4 hover:bg-gray-50">
+      <button
+        @click="router.push('/struk')"
+        class="flex items-center justify-between w-full px-5 py-4 hover:bg-gray-50"
+      >
         <div class="flex items-center gap-3">
           <ReceiptText class="w-5 h-5 text-gray-500" />
           <span class="text-gray-800 font-medium">Struk</span>
