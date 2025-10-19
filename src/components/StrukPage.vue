@@ -64,24 +64,25 @@ const connectBluetooth = async () => {
 }
 
 const printToBluetooth = async () => {
-  if (!parsed.value) return alert("Tidak ada data untuk dicetak")
-  if (!printerServer.value) return connectBluetooth()
-  isPrinting.value = true
+  if (!parsed.value) return alert("Tidak ada data untuk dicetak");
+  if (!printerServer.value) return connectBluetooth();
+  isPrinting.value = true;
 
   try {
-    let service, characteristic
+    let service, characteristic;
 
-    // deteksi otomatis service printer
+    // Deteksi otomatis service printer
     try {
-      service = await printerServer.value.getPrimaryService(0x18f0)
-      characteristic = await service.getCharacteristic(0x2af1)
+      service = await printerServer.value.getPrimaryService(0x18f0);
+      characteristic = await service.getCharacteristic(0x2af1);
     } catch {
-      // fallback ke FF00 (beberapa printer lawas)
-      service = await printerServer.value.getPrimaryService(0xff00)
-      characteristic = await service.getCharacteristic(0xff01)
+      // fallback untuk printer lawas
+      service = await printerServer.value.getPrimaryService(0xff00);
+      characteristic = await service.getCharacteristic(0xff01);
     }
 
-const text = `
+    // Template struk
+    const text = `
 MINI ATM BERSAMA
 IAM CELL
 Jl.NASIONAL 05 TANJUNGSARI
@@ -98,22 +99,33 @@ TOTAL        : Rp${((parsed.value.nominal || 0) + (parsed.value.biaya_admin || 5
 
 TERSEDIA PULSA ALL OPERATOR
 BAYAR LISTRIK, PDAM, TOP UP E-WALLET
-TERIMAKASIH\n\n\n\n\n\x1B\x64\x05
-`
+TERIMAKASIH
 
-    // konversi ke byte
-    const encoder = new TextEncoder()
-    const data = encoder.encode("\x1B\x40" + text + "\n\n\n\x1D\x56\x41")
 
-    await characteristic.writeValue(data)
-    alert("✅ Struk berhasil dikirim ke printer!")
+\n\n\n\n\n\x1B\x64\x05\x1D\x56\x41
+`;
+
+    // Konversi ke bytes
+    const encoder = new TextEncoder();
+    const data = encoder.encode("\x1B\x40" + text); // ESC @ reset printer
+
+    // 🔹 Kirim data per chunk agar tidak terpotong
+    const CHUNK_SIZE = 180; // bisa sesuaikan antara 180-512 tergantung printer
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+      const chunk = data.slice(i, i + CHUNK_SIZE);
+      await characteristic.writeValue(chunk);
+      await new Promise((r) => setTimeout(r, 100)); // jeda 100ms tiap chunk
+    }
+
+    alert("✅ Struk berhasil dikirim ke printer!");
   } catch (err) {
-    console.error("Error print:", err)
-    alert("❌ Gagal mencetak struk ke printer! Periksa koneksi Bluetooth atau UUID printer.")
+    console.error("Error print:", err);
+    alert("❌ Gagal mencetak struk ke printer! Periksa koneksi Bluetooth atau UUID printer.");
   } finally {
-    isPrinting.value = false
+    isPrinting.value = false;
   }
-}
+};
+
 </script>
 
 <template>
