@@ -28,10 +28,11 @@ const handleUpload = async () => {
   formData.append("image", image.value);
   try {
     const res = await api.post("/ocr", formData);
+    console.log(res.data);
     // Normalisasi hasil parsed
     parsed.value = {
       tanggal: res.data?.parsed?.tanggal || "",
-      bank_tujuan: res.data?.parsed?.bank || "",
+      bank_tujuan: res.data?.parsed?.bank_tujuan || "",
       rekening_penerima: res.data?.parsed?.rekening_penerima || "",
       penerima: res.data?.parsed?.penerima || "",
       pengirim: res.data?.parsed?.pengirim || "",
@@ -108,7 +109,7 @@ SILAHKAN SIMPAN RESI INI SEBAGAI
 BUKTI PEMBAYARAN YANG SAH
 \x1B\x61\x00
 
-\n\n\n\x1B\x64\x02\x1D\x56\x41
+\n\n\x1B\x64\x01\x1D\x56\x41
 `;
 
 
@@ -176,12 +177,13 @@ BUKTI PEMBAYARAN YANG SAH
     >
       <div class="text-center border-b pb-3 mb-3">
         <h2 class="font-bold text-base">MINI ATM BERSAMA</h2>
+        <h2 class="font-bold text-base">IAM CELL</h2>
         <p class="text-xs">Jl.NASIONAL 05 TANJUNGSARI</p>
         <p>{{ parsed.tanggal || '10/9/2025 10:24' }}</p>
       </div>
 
       <div class="space-y-1">
-        <p><b>BANK TUJUAN :</b> {{ parsed.bank_tujuan || 'BRI' }}</p>
+        <p><b>BANK TUJUAN :</b> {{ parsed.bank_tujuan }}</p>
         <p><b>NO. REKENING :</b> {{ parsed.rekening_penerima }}</p>
         <p><b>NAMA PENERIMA :</b> {{ parsed.penerima }}</p>
         <p><b>PENGIRIM :</b> {{ parsed.pengirim }}</p>
