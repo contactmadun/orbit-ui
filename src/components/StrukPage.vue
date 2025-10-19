@@ -98,7 +98,7 @@ TOTAL        : Rp${((parsed.value.nominal || 0) + (parsed.value.biaya_admin || 5
 
 TERSEDIA PULSA ALL OPERATOR
 BAYAR LISTRIK, PDAM, TOP UP E-WALLET
-TERIMAKASIH\n\n\n
+TERIMAKASIH\n\n\n\n\n\x1B\x64\x05
 `
 
     // konversi ke byte
