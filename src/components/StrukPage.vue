@@ -82,12 +82,13 @@ const printToBluetooth = async () => {
     }
 
     // Template struk
-    const text = `
-MINI ATM BERSAMA
+ const text = `
+\x1B\x61\x01MINI ATM BERSAMA
 IAM CELL
 Jl.NASIONAL 05 TANJUNGSARI
 ${parsed.value.tanggal || "10/9/2025 10:24"}
-
+\x1B\x61\x00
+--------------------------------
 BANK TUJUAN  : ${parsed.value.bank_tujuan || "BRI"}
 NO. REKENING : ${parsed.value.rekening_penerima || "-"}
 NAMA PENERIMA: ${parsed.value.penerima || "-"}
@@ -96,14 +97,20 @@ NO. REFF     : ${parsed.value.reff || "-"}
 NOMINAL      : Rp${(parsed.value.nominal || 0).toLocaleString("id-ID")}
 BIAYA ADMIN  : Rp${(parsed.value.biaya_admin || 5000).toLocaleString("id-ID")}
 TOTAL        : Rp${((parsed.value.nominal || 0) + (parsed.value.biaya_admin || 5000)).toLocaleString("id-ID")}
-
+STATUS       : SUKSES
+--------------------------------
+\x1B\x61\x01
 TERSEDIA PULSA ALL OPERATOR
 BAYAR LISTRIK, PDAM, TOP UP E-WALLET
 TERIMAKASIH
 
+SILAHKAN SIMPAN RESI INI SEBAGAI
+BUKTI PEMBAYARAN YANG SAH
+\x1B\x61\x00
 
-\n\n\n\n\n\x1B\x64\x05\x1D\x56\x41
+\n\n\n\x1B\x64\x03\x1D\x56\x41
 `;
+
 
     // Konversi ke bytes
     const encoder = new TextEncoder();
@@ -182,6 +189,7 @@ TERIMAKASIH
         <p><b>NOMINAL :</b> Rp{{ parsed.nominal?.toLocaleString('id-ID') || '0' }}</p>
         <p><b>BIAYA ADMIN :</b> Rp{{ parsed.biaya_admin?.toLocaleString('id-ID') || '0' }}</p>
         <p><b>TOTAL :</b> Rp{{ ((parsed.nominal || 0) + (parsed.biaya_admin || 0)).toLocaleString('id-ID') }}</p>
+        <p><b>STATUS :</b> SUKSES</p>
       </div>
 
       <div class="border-t mt-3 pt-3 text-center text-xs text-gray-500">
