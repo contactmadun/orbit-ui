@@ -22,20 +22,30 @@ const handleFileChange = (e) => {
 }
 
 const handleUpload = async () => {
-  if (!image.value) return alert("Pilih gambar terlebih dahulu!")
-  isUploading.value = true
-  const formData = new FormData()
-  formData.append("image", image.value)
+  if (!image.value) return alert("Pilih gambar terlebih dahulu!");
+  isUploading.value = true;
+  const formData = new FormData();
+  formData.append("image", image.value);
   try {
-    const res = await api.post("/ocr", formData)
-    parsed.value = res.data
+    const res = await api.post("/ocr", formData);
+    // Normalisasi hasil parsed
+    parsed.value = {
+      tanggal: res.data?.parsed?.tanggal || "",
+      bank_tujuan: res.data?.parsed?.bank || "",
+      rekening_penerima: res.data?.parsed?.rekening_penerima || "",
+      penerima: res.data?.parsed?.penerima || "",
+      pengirim: res.data?.parsed?.pengirim || "",
+      reff: res.data?.parsed?.noref || "",
+      nominal: res.data?.parsed?.nominal || 0,
+      biaya_admin: res.data?.biaya_admin || 5000,
+    };
   } catch (err) {
-    console.error(err)
-    alert("Gagal upload gambar!")
+    console.error(err);
+    alert("Gagal upload gambar!");
   } finally {
-    isUploading.value = false
+    isUploading.value = false;
   }
-}
+};
 
 // --- Bluetooth Printing ---
 const connectBluetooth = async () => {
@@ -71,9 +81,10 @@ const printToBluetooth = async () => {
       characteristic = await service.getCharacteristic(0xff01)
     }
 
-    const text = `
+const text = `
 MINI ATM BERSAMA
-KOMP. PASAR LAMA BELOPA
+IAM CELL
+Jl.NASIONAL 05 TANJUNGSARI
 ${parsed.value.tanggal || "10/9/2025 10:24"}
 
 BANK TUJUAN  : ${parsed.value.bank_tujuan || "BRI"}
@@ -82,8 +93,8 @@ NAMA PENERIMA: ${parsed.value.penerima || "-"}
 PENGIRIM     : ${parsed.value.pengirim || "-"}
 NO. REFF     : ${parsed.value.reff || "-"}
 NOMINAL      : Rp${(parsed.value.nominal || 0).toLocaleString("id-ID")}
-BIAYA ADMIN  : Rp${(parsed.value.biaya_admin || 0).toLocaleString("id-ID")}
-TOTAL        : Rp${((parsed.value.nominal || 0) + (parsed.value.biaya_admin || 0)).toLocaleString("id-ID")}
+BIAYA ADMIN  : Rp${(parsed.value.biaya_admin || 5000).toLocaleString("id-ID")}
+TOTAL        : Rp${((parsed.value.nominal || 0) + (parsed.value.biaya_admin || 5000)).toLocaleString("id-ID")}
 
 TERSEDIA PULSA ALL OPERATOR
 BAYAR LISTRIK, PDAM, TOP UP E-WALLET
@@ -146,7 +157,7 @@ TERIMAKASIH\n\n\n
     >
       <div class="text-center border-b pb-3 mb-3">
         <h2 class="font-bold text-base">MINI ATM BERSAMA</h2>
-        <p class="text-xs">KOMP. PASAR LAMA BELOPA</p>
+        <p class="text-xs">Jl.NASIONAL 05 TANJUNGSARI</p>
         <p>{{ parsed.tanggal || '10/9/2025 10:24' }}</p>
       </div>
 
