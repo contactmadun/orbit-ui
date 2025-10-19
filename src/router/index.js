@@ -26,6 +26,7 @@ import History from '../components/HistoryPage.vue'
 import EditProduct from '../components/reusable/EditOrAddProduct.vue'
 import TransactionDetail from '../components/TransactionDetail.vue'
 import StrukPage from '../components/StrukPage.vue'
+import StockOpname from '../components/StockOpname.vue'
 
 const routes = [
     {
@@ -83,6 +84,11 @@ const routes = [
     path: '/finance',
     name: 'finance',
     component: Finance
+    },
+    {
+    path: '/stocks-opname',
+    name: 'stokOpname',
+    component: StockOpname
     },
     {
     path: '/expanse',
