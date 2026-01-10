@@ -27,6 +27,7 @@ import EditProduct from '../components/reusable/EditOrAddProduct.vue'
 import TransactionDetail from '../components/TransactionDetail.vue'
 import StrukPage from '../components/StrukPage.vue'
 import StockOpname from '../components/StockOpname.vue'
+import AddStock from '../components/AddStock.vue'
 
 const routes = [
     {
@@ -164,6 +165,11 @@ const routes = [
     path: '/add-brand',
     name: 'addBrand',
     component: AddBrand
+    },
+    {
+    path: '/add-stock',
+    name: 'addStock',
+    component: AddStock
     },
     {
     path: '/setting',

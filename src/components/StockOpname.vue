@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from "vue"
+import { ref, reactive, computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { useUserStore } from "@/stores/user"
 import api from "../axios"
@@ -22,10 +22,19 @@ const brands = ref([])
 const selectedBrand = ref("")
 const products = ref([])
 const loading = ref(false)
-const physicalStocks = ref({})
-const verified = ref(false)
-const differences = ref({})
-const adjustMode = ref({})
+
+// per-row states
+const physicalStocks = reactive({})   // keyed by product.id
+const differences = reactive({})      // keyed by product.id
+const editable = reactive({})         // keyed by product.id -> true = input enabled
+const adjustMode = reactive({})       // keyed by product.id -> true = currently in adjust/edit mode
+const verifiedPer = reactive({})      // keyed by product.id -> true = this row has been verified
+
+// computed: apakah boleh menyimpan (semua baris harus ter-verified)
+const canSave = computed(() => {
+  if (!products.value.length) return false
+  return products.value.every(p => verifiedPer[p.id] === true)
+})
 
 // Fetch daftar brand
 const fetchBrands = async () => {
@@ -47,10 +56,15 @@ const fetchProducts = async () => {
   try {
     const res = await api.get(`/products?brandId=${selectedBrand.value}`)
     products.value = res.data.data || []
-    physicalStocks.value = {}
-    verified.value = false
-    differences.value = {}
-    adjustMode.value = {}
+
+    // reset per-row states
+    products.value.forEach(p => {
+      physicalStocks[p.id] = 0
+      differences[p.id] = 0
+      editable[p.id] = true    // awalnya user boleh isi stok fisik
+      adjustMode[p.id] = false
+      verifiedPer[p.id] = false
+    })
   } catch (err) {
     console.error("Error fetching products:", err)
   } finally {
@@ -58,44 +72,70 @@ const fetchProducts = async () => {
   }
 }
 
-// Proses verifikasi stok
+/**
+ * Verifikasi global:
+ * - Hitung difference untuk tiap produk
+ * - Set verifiedPer[id] = true (artinya current value terverifikasi)
+ * - Jika difference === 0 -> lock input (editable=false)
+ * - Jika difference !== 0 -> input tetap editable (user bisa adjust)
+ * - Reset adjustMode[id] = false (karena verifikasi berarti mode adjust selesai)
+ */
 const verifyStocks = () => {
-  verified.value = true
-  products.value.forEach((p) => {
-    const physical = Number(physicalStocks.value[p.id] || 0)
+  products.value.forEach(p => {
+    const physical = Number(physicalStocks[p.id] || 0)
     const system = Number(p.stok)
     const diff = physical - system
-    differences.value[p.id] = diff
+    differences[p.id] = diff
 
-    // jika ada selisih maka input aktif & tombol adjust aktif
-    adjustMode.value[p.id] = diff !== 0
+    // after verify mark as verified
+    verifiedPer[p.id] = true
+
+    // if equal -> lock input; if not equal => keep editable so user can adjust
+    editable[p.id] = diff !== 0
+
+    // ensure adjust mode reset after verify
+    adjustMode[p.id] = false
   })
 }
 
-// Toggle mode Adjust
+/**
+ * Toggle Adjust per row:
+ * - Jika user klik "Adjust" (sebelumnya verified & diff != 0):
+ *     -> set adjustMode[id] = true (masuk mode edit), make editable[id] = true
+ *     -> set verifiedPer[id] = false (karena user mulai ubah -> harus verifikasi ulang)
+ * - Jika user klik "Selesai" (sudah selesai editing):
+ *     -> set adjustMode[id] = false, lock input (editable[id] = false)
+ *     -> verifiedPer[id] tetap false (user harus klik Verifikasi global lagi)
+ *
+ * Per-row only: tidak mengubah state baris lain.
+ */
 const toggleAdjust = (productId) => {
-  // Jika sedang dalam mode adjust (klik selesai)
-  if (adjustMode.value[productId]) {
-    adjustMode.value[productId] = false
-    verified.value = false // aktifkan kembali tombol verifikasi
+  if (adjustMode[productId]) {
+    // selesai edit
+    adjustMode[productId] = false
+    editable[productId] = false
+    // require re-verification for this row
+    verifiedPer[productId] = false
   } else {
-    // Jika bukan dalam mode adjust, aktifkan kembali input
-    adjustMode.value[productId] = true
+    // mulai edit (user ingin ubah fisik)
+    adjustMode[productId] = true
+    editable[productId] = true
+    verifiedPer[productId] = false
   }
 }
 
 // Kirim hasil opname
 const submitStockOpname = async () => {
-  if (!verified.value) {
-    alert("Silakan lakukan verifikasi terlebih dahulu!")
+  if (!canSave.value) {
+    alert("Semua item harus terverifikasi terlebih dahulu sebelum menyimpan.")
     return
   }
 
   const opnameItems = products.value.map((p) => ({
     productId: p.id,
     systemStock: p.stok,
-    physicalStock: Number(physicalStocks.value[p.id] || 0),
-    difference: differences.value[p.id] || 0,
+    physicalStock: Number(physicalStocks[p.id] || 0),
+    difference: differences[p.id] || 0,
   }))
 
   try {
@@ -108,8 +148,12 @@ const submitStockOpname = async () => {
     alert("Data stok opname berhasil disimpan!")
     products.value = []
     selectedBrand.value = ""
-    verified.value = false
-    adjustMode.value = {}
+    // clear per-row states
+    Object.keys(physicalStocks).forEach(k => delete physicalStocks[k])
+    Object.keys(differences).forEach(k => delete differences[k])
+    Object.keys(editable).forEach(k => delete editable[k])
+    Object.keys(adjustMode).forEach(k => delete adjustMode[k])
+    Object.keys(verifiedPer).forEach(k => delete verifiedPer[k])
   } catch (err) {
     console.error("Gagal menyimpan:", err)
     alert("Gagal menyimpan stok opname.")
@@ -169,18 +213,21 @@ onMounted(() => {
             class="border-t border-gray-200"
           >
             <td class="px-4 py-2">{{ product.name }}</td>
+
+            <!-- input editable per-row -->
             <td class="px-4 py-2">
               <Input
                 type="number"
                 min="0"
                 class="w-24"
                 v-model="physicalStocks[product.id]"
-                :disabled="verified && !adjustMode[product.id]"
+                :disabled="!editable[product.id]"
               />
             </td>
+
             <td class="px-4 py-2 text-sm">
               <span
-                v-if="verified"
+                v-if="verifiedPer[product.id]"
                 :class="{
                   'text-green-600': differences[product.id] > 0,
                   'text-red-600': differences[product.id] < 0,
@@ -191,18 +238,15 @@ onMounted(() => {
               </span>
               <span v-else class="text-gray-400 italic">-</span>
             </td>
+
             <td class="px-4 py-2">
               <Button
                 variant="secondary"
                 size="sm"
                 @click="toggleAdjust(product.id)"
-                :disabled="!verified || differences[product.id] === 0"
+                :disabled="!verifiedPer[product.id] || differences[product.id] === 0"
               >
-                {{
-                  adjustMode[product.id]
-                    ? "Selesai"
-                    : "Adjust"
-                }}
+                {{ adjustMode[product.id] ? "Selesai" : "Adjust" }}
               </Button>
             </td>
           </tr>
@@ -222,12 +266,12 @@ onMounted(() => {
       <Button
         variant="outline"
         @click="verifyStocks"
-        :disabled="verified && !Object.values(adjustMode).includes(true)"
         class="px-6"
       >
-        {{ verified ? "Terverifikasi" : "Verifikasi" }}
+        Verifikasi
       </Button>
-      <Button @click="submitStockOpname" class="px-6" :disabled="!verified">
+
+      <Button @click="submitStockOpname" class="px-6" :disabled="!canSave">
         Simpan
       </Button>
     </div>
