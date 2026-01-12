@@ -51,7 +51,7 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+  <div class="h-screen grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
     
     <!-- LEFT SIDE (Branding) -->
     <div class="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-blue-600 to-blue-500 text-white">
@@ -81,7 +81,7 @@ const handleLogin = async () => {
     </div>
 
     <!-- RIGHT SIDE (Login Form) -->
-    <div class="flex items-center justify-center px-6">
+    <div class="flex lg:items-center justify-center px-6 pt-28 lg:pt-0">
       <div class="w-full max-w-md">
 
         <!-- Alert -->
@@ -100,7 +100,7 @@ const handleLogin = async () => {
         <h2 class="text-center lg:text-start text-3xl text-gray-800 font-bold mb-1">
           Selamat Datang Kembali
         </h2>
-        <p class="text-center lg:text-start text-base text-gray-400 mb-12 lg:mb-6">
+        <p class="text-center lg:text-start text-base text-gray-400 mb-6 lg:mb-6">
           Masuk ke dashboard untuk mengelola transaksi Anda.
         </p>
 
