@@ -100,7 +100,7 @@ const handleLogin = async () => {
         <h2 class="text-center lg:text-start text-3xl text-gray-800 font-bold mb-1">
           Selamat Datang Kembali
         </h2>
-        <p class="text-center lg:text-start text-base text-gray-400 mb-20 lg:mb-6">
+        <p class="text-center lg:text-start text-base text-gray-400 mb-12 lg:mb-6">
           Masuk ke dashboard untuk mengelola transaksi Anda.
         </p>
 
@@ -151,7 +151,7 @@ const handleLogin = async () => {
             {{ errorMessage }}
           </p>
 
-          <button class="w-full py-3 lg:py-4 bg-blue-700 text-white font-bold text-lg rounded-2xl hover:bg-blue-900 hover:translate-y-0.5 transition-all transform duration-200">
+          <button class="w-full py-2 lg:py-4 bg-blue-700 text-white font-bold text-lg rounded-2xl hover:bg-blue-900 hover:translate-y-0.5 transition-all transform duration-200">
             Masuk
           </button>
 
