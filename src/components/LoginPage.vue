@@ -151,7 +151,7 @@ const handleLogin = async () => {
             {{ errorMessage }}
           </p>
 
-          <button class="w-full py-2 lg:py-4 bg-blue-700 text-white font-bold text-lg rounded-2xl hover:bg-blue-900 hover:translate-y-0.5 transition-all transform duration-200">
+          <button class="w-full py-2 lg:py-4 bg-blue-700 text-white font-bold text-lg rounded-2xl hover:bg-blue-900 hover:translate-y-0.5 transition-all transform duration-200 shadow-lg">
             Masuk
           </button>
 
