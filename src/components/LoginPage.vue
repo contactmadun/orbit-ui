@@ -13,6 +13,7 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const msg = ref("")
+const isLoading = ref(false)
 
 const errorMessage = ref("")
 const email = ref("")
@@ -31,8 +32,8 @@ onMounted(() => {
 
 const handleLogin = async () => {
     try {
-        // console.log(email.value);
-        // console.log(password.value);
+        isLoading.value = true
+
         const res = await api.post("users/login", {
             email: email.value,
             password: password.value
@@ -46,12 +47,39 @@ const handleLogin = async () => {
         errorMessage.value = error.response.data.message
         // console.error(err.response?.data || err.message)
         // msg.value = err.response?.data?.message || "Login gagal"
+    } finally {
+      isLoading.value = false
     }
 }
 </script>
 
 <template>
   <div class="h-screen grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+    <!-- LOADING OVERLAY -->
+    <Transition
+      enter-active-class="transition-opacity duration-300"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="isLoading"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      >
+        <div class="bg-white rounded-2xl p-8 w-64 flex flex-col items-center shadow-xl">
+          
+          <!-- Spinner -->
+          <div class="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+
+          <p class="text-gray-700 font-semibold">
+            Memproses login...
+          </p>
+
+        </div>
+      </div>
+    </Transition>
     
     <!-- LEFT SIDE (Branding) -->
     <div class="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-blue-600 to-blue-500 text-white">
@@ -151,7 +179,7 @@ const handleLogin = async () => {
             {{ errorMessage }}
           </p>
 
-          <button class="w-full py-2 lg:py-4 bg-blue-700 text-white font-bold text-lg rounded-2xl hover:bg-blue-900 hover:translate-y-0.5 transition-all transform duration-200 shadow-lg">
+          <button :disabled="isLoading" class="w-full py-2 lg:py-4 bg-blue-700 text-white font-bold text-lg rounded-2xl hover:bg-blue-900 hover:translate-y-0.5 transition-all transform duration-200 shadow-lg">
             Masuk
           </button>
 

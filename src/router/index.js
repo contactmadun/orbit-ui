@@ -28,6 +28,7 @@ import TransactionDetail from '../components/TransactionDetail.vue'
 import StrukPage from '../components/StrukPage.vue'
 import StockOpname from '../components/StockOpname.vue'
 import AddStock from '../components/AddStock.vue'
+import DashboardPage from "@/components/DashboardPage.vue";
 
 const routes = [
     {
@@ -40,6 +41,11 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login
+    },
+    {
+    path: '/dashboard',
+    name: 'Dashbord',
+    component: DashboardPage
     },
     {
     path: '/history',
