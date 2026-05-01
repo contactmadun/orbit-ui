@@ -1,244 +1,492 @@
 <script setup>
-import api from '../axios'
-import { Check, ChevronsUpDown, Search } from "lucide-vue-next"
-import { ref, onMounted } from 'vue'
-import TopNavbar from './reusable/TopNavbar.vue'
-import Label from './ui/label/Label.vue'
-import Input from './ui/input/Input.vue'
-import Button from './ui/button/Button.vue'
-import { Switch } from "@/components/ui/switch"
-import { useCurrencyInput } from "@/composable/useCurrencyInput"
+import { ref, onMounted, computed, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import api from "../axios";
+import { Package, Copy } from "lucide-vue-next";
 import {
-  Combobox,
-  ComboboxInput,
-  ComboboxList,
-  ComboboxEmpty,
-  ComboboxGroup,
-  ComboboxItem,
-  ComboboxItemIndicator,
-  ComboboxAnchor,
-  ComboboxTrigger
-} from "@/components/ui/combobox"
-import { Textarea } from "@/components/ui/textarea"
-import { useUserStore } from "@/stores/user"
-import router from '@/router'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
 
-const userStore = useUserStore()
+const loading = ref(false);
+const categories = ref([]);
+const brands = ref([]);
+const isInject = ref(false);
+const showSuccessDialog = ref(false);
+const lastProductName = ref("");
+const router = useRouter();
+const route = useRoute();
 
-// states
-const brands = ref([])
-const categories = ref([])
+const isEdit = computed(() => !!route.params.id);
 
-const name = ref("")
-const description = ref("")
-const purchasePrice = useCurrencyInput()
-const agentPrice = useCurrencyInput()
-const retailPrice = useCurrencyInput()
-const stok = ref("")
-const minimumStok = ref("")
-const selectedBrand = ref(null)
-const selectedCategory = ref(null)
-const typeProduct = ref(false)
+const form = ref({
+  categoryId: "",
+  brandId: "",
+  sku: "",
+  productName: "",
+  description: "",
+  costPrice: "",
+  retailPrice: "",
+  wholesalePrice: "",
+  typeProduct: "stok",
+  minimumStok: 0,
+  status: "active",
+});
 
-// Fetch brands & categories
-const fetchBrands = async () => {
+const marginAmount = computed(() => {
+  const cost = Number(form.value.costPrice);
+  const retail = Number(form.value.retailPrice);
+
+  if (!cost || !retail) return 0;
+
+  return retail - cost;
+});
+
+const marginPercent = computed(() => {
+  const cost = Number(form.value.costPrice);
+  const retail = Number(form.value.retailPrice);
+
+  if (!cost || !retail) return 0;
+
+  return ((retail - cost) / retail) * 100;
+});
+
+async function fetchProduct() {
   try {
-    const res = await api.get(`/brand?storeId=${userStore.storeId}`)
-    brands.value = res.data.map(b => ({ label: b.name, value: b.id }))
+    const res = await api.get(`/products/${route.params.id}`);
+
+    const data = res.data.data;
+
+    form.value = {
+      categoryId: data.categoryId,
+      brandId: data.brandId,
+      sku: data.sku,
+      productName: data.productName,
+      description: data.description,
+      costPrice: data.costPrice,
+      retailPrice: data.retailPrice,
+      wholesalePrice: data.wholesalePrice,
+      typeProduct: data.typeProduct,
+      minimumStok: data.minimumStok,
+      status: data.status,
+    };
+
+    isInject.value = data.typeProduct === "inject";
   } catch (err) {
-    console.error("Gagal ambil brand:", err)
+    console.error(err);
   }
 }
 
-const fetchCategories = async () => {
+function formatRupiah(value) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+}
+
+function formatNumber(value) {
+  if (!value) return "";
+  return new Intl.NumberFormat("id-ID").format(value);
+}
+
+function parseNumber(value) {
+  return value.replace(/\D/g, "");
+}
+
+function handleRupiahInput(field, event) {
+  if (isInject.value && field === "wholesalePrice") {
+    return;
+  }
+
+  const raw = parseNumber(event.target.value);
+
+  form.value[field] = raw;
+
+  event.target.value = formatNumber(raw);
+}
+/* ===============================
+FETCH CATEGORY & BRAND
+=============================== */
+
+async function fetchData() {
+  loading.value = true;
+
   try {
-    const res = await api.get(`/category?storeId=${userStore.storeId}`)
-    categories.value = res.data.map(c => ({ label: c.name, value: c.id }))
+    const [categoryRes, brandRes] = await Promise.all([
+      api.get("/category"),
+      api.get("/brand"),
+    ]);
+
+    categories.value = categoryRes.data.data || [];
+    brands.value = brandRes.data.data || [];
   } catch (err) {
-    console.error("Gagal ambil kategori:", err)
+    console.error(err);
+  } finally {
+    loading.value = false;
   }
 }
 
-onMounted(() => {
-  fetchBrands()
-  fetchCategories()
-})
+/* ===============================
+SUBMIT PRODUCT
+=============================== */
 
-// handle submit
-const saveProduct = async () => {
+async function submitProduct(duplicate = false) {
   try {
-    const payload = {
-      storeId: userStore.storeId,
-      name: name.value,
-      brandId: selectedBrand.value?.value,
-      categoryId: selectedCategory.value?.value,
-      description: description.value,
-      purchasePrice: purchasePrice.parse(),
-      typeProduct: typeProduct.value,
-      agentPrice: agentPrice.parse() || 0,
-      retailPrice: retailPrice.parse(),
-      stok: stok.value || 0,
-      minimumStok: minimumStok.value || 0
+    loading.value = true;
+
+    let res;
+
+    if (isEdit.value) {
+      res = await api.put(`/products/${route.params.id}`, form.value);
+    } else {
+      res = await api.post("/products", form.value);
     }
 
-    // console.log(payload);
-    await api.post('/products', payload)
-    alert("Produk berhasil disimpan ✅")
-    router.push('/product');
-    // reset form
-    name.value = ""
-    description.value = ""
-    purchasePrice.reset() 
-    agentPrice.reset()
-    retailPrice.reset()
-    stok.value = ""
-    minimumStok.value = ""
-    selectedBrand.value = null
-    selectedCategory.value = null
+    // jika save & duplicate
+    if (duplicate && !isEdit.value) {
+      lastProductName.value = form.value.productName;
 
+      showSuccessDialog.value = true;
+
+      // reset form untuk produk baru
+      form.value = {
+        categoryId: form.value.categoryId,
+        brandId: form.value.brandId,
+        sku: "",
+        productName: form.value.productName,
+        description: form.value.description,
+        costPrice: "",
+        retailPrice: "",
+        wholesalePrice: "",
+        typeProduct: form.value.typeProduct,
+        minimumStok: form.value.minimumStok,
+        status: "active",
+      };
+
+      return;
+    }
+
+    // normal save
+    router.push("/product/list-product");
   } catch (err) {
-    console.error("Error simpan produk:", err)
-    alert("Gagal menyimpan produk ❌")
+    console.log(err);
+  } finally {
+    loading.value = false;
   }
 }
+
+watch(isInject, (val) => {
+  form.value.typeProduct = val ? "inject" : "stok";
+
+  if (val) {
+    form.value.minimumStok = 0;
+    form.value.wholesalePrice = 0;
+  }
+});
+
+onMounted(() => {
+  fetchData();
+
+  if (isEdit.value) {
+    fetchProduct();
+  }
+});
 </script>
 
 <template>
-  <TopNavbar title="Tambah Produk"/>
-  <form @submit.prevent="saveProduct" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 px-5 w-full">
-    <div class="w-full">
-      <h1 class="font-medium mb-7">Info Produk</h1>
+  <div class="max-w-4xl mx-auto">
+    <!-- CARD -->
+    <div class="bg-white border rounded-xl p-6 space-y-6">
+      <!-- PRODUCT INFO -->
+      <div>
+        <div class="flex gap-4 items-center mb-5">
+          <div class="p-3 bg-slate-50 border rounded-2xl border-slate-100">
+            <Package class="w-5 h-5 text-blue-900" />
+          </div>
 
-      <!-- Nama Produk -->
-      <div class="grid gap-2 w-full">
-        <Label for="name" class="block text-left text-gray-500">Nama Produk</Label>
-        <Input id="name" v-model="name" placeholder="Voucher Data Tsel" class="w-full text-sm" required />
-      </div>
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900">Add Product</h3>
+            <p class="text-sm text-slate-500">
+              Create a product for your inventory
+            </p>
+          </div>
+        </div>
 
-      <!-- Brand & Category -->
-      <div class="grid grid-cols-2 gap-5 text-left">
-        <!-- Brand -->
-        <div class="flex flex-col items-start py-4">
-          <Label class="block text-left text-gray-500 mb-2">Brand</Label>
-          <Combobox v-model="selectedBrand" by="value">
-            <ComboboxAnchor as-child>
-              <ComboboxTrigger as-child>
-                <Button variant="outline" class="w-[150px] justify-between text-gray-500 font-normal">
-                  {{ selectedBrand?.label ?? 'Pilih Brand' }}
-                  <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </ComboboxTrigger>
-            </ComboboxAnchor>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- PRODUCT NAME -->
+          <div class="col-span-2">
+            <label class="text-sm text-gray-600">Nama Produk</label>
+            <input
+              v-model="form.productName"
+              type="text"
+              class="w-full mt-1 border rounded-lg px-3 py-2"
+              placeholder="Contoh : Telkomsel 50.000"
+            />
+          </div>
 
-            <ComboboxList class="w-[150px]">
-              <div class="relative w-full max-w-sm items-center">
-                <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Brand" />
-                <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
-                  <Search class="size-4 text-muted-foreground" />
-                </span>
-              </div>
-              <ComboboxEmpty>Brand tidak ditemukan.</ComboboxEmpty>
-              <ComboboxGroup>
-                <ComboboxItem
+          <!-- SKU -->
+          <div>
+            <label class="text-sm text-gray-600">SKU</label>
+            <input
+              v-model="form.sku"
+              type="text"
+              class="w-full mt-1 border rounded-lg px-3 py-2"
+              placeholder="SKU-001"
+            />
+          </div>
+
+          <!-- TYPE PRODUCT -->
+          <div
+            class="flex items-center justify-between border rounded-lg px-4 py-3"
+          >
+            <div>
+              <p class="text-sm font-medium text-gray-700">Inject Product</p>
+              <p class="text-xs text-gray-500">
+                Enable if this is a digital / inject product
+              </p>
+            </div>
+
+            <Switch v-model="isInject" />
+          </div>
+
+          <!-- CATEGORY -->
+          <div>
+            <label class="text-sm text-gray-600">Category</label>
+
+            <Select v-model="form.categoryId">
+              <SelectTrigger class="w-full mt-1">
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem
+                  v-for="cat in categories"
+                  :key="cat.id"
+                  :value="cat.id"
+                >
+                  {{ cat.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <!-- BRAND -->
+          <div>
+            <label class="text-sm text-gray-600">Brand</label>
+
+            <Select v-model="form.brandId">
+              <SelectTrigger class="w-full mt-1">
+                <SelectValue placeholder="Select Brand" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem
                   v-for="brand in brands"
-                  :key="brand.value"
-                  :value="brand"
+                  :key="brand.id"
+                  :value="brand.id"
                 >
-                  {{ brand.label }}
-                  <ComboboxItemIndicator>
-                    <Check class="ml-auto h-4 w-4" />
-                  </ComboboxItemIndicator>
-                </ComboboxItem>
-              </ComboboxGroup>
-            </ComboboxList>
-          </Combobox>
-        </div>
+                  {{ brand.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <!-- Category -->
-        <div class="flex flex-col items-start py-4">
-          <Label class="block text-left text-gray-500 mb-2">Kategori</Label>
-          <Combobox v-model="selectedCategory" by="value">
-            <ComboboxAnchor as-child>
-              <ComboboxTrigger as-child>
-                <Button variant="outline" class="w-[150px] justify-between text-gray-500 font-normal">
-                  {{ selectedCategory?.label ?? 'Pilih Kategori' }}
-                  <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </ComboboxTrigger>
-            </ComboboxAnchor>
-
-            <ComboboxList class="w-[150px]">
-              <div class="relative w-full max-w-sm items-center">
-                <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Kategori" />
-                <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
-                  <Search class="size-4 text-muted-foreground" />
-                </span>
-              </div>
-              <ComboboxEmpty>Kategori tidak ditemukan.</ComboboxEmpty>
-              <ComboboxGroup>
-                <ComboboxItem
-                  v-for="category in categories"
-                  :key="category.value"
-                  :value="category"
-                >
-                  {{ category.label }}
-                  <ComboboxItemIndicator>
-                    <Check class="ml-auto h-4 w-4" />
-                  </ComboboxItemIndicator>
-                </ComboboxItem>
-              </ComboboxGroup>
-            </ComboboxList>
-          </Combobox>
+          <!-- DESCRIPTION -->
+          <div class="col-span-2">
+            <label class="text-sm text-gray-600">Description</label>
+            <textarea
+              v-model="form.description"
+              rows="3"
+              class="w-full mt-1 border rounded-lg px-3 py-2"
+            />
+          </div>
         </div>
       </div>
 
-      <!-- Deskripsi -->
-      <div class="grid w-full gap-1.5 mb-4">
-        <Label for="description" class="text-gray-500">Deskripsi Produk</Label>
-        <Textarea id="description" v-model="description" placeholder="Deskripsi produk" class="text-sm" />
-        <p class="text-sm text-muted-foreground">Lengkapi deskripsi produkmu.</p>
-      </div>
-      <div class="flex items-center space-x-2">
-        <Switch id="airplane-mode" v-model="typeProduct" />
-        <Label for="airplane-mode" class="text-gray-500">Produk Inject</Label>
+      <!-- PRICE -->
+      <div>
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">Pricing</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- COST PRICE -->
+          <div>
+            <label class="text-sm text-gray-600">Cost Price</label>
+
+            <div class="relative mt-1">
+              <span
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+              >
+                Rp
+              </span>
+
+              <input
+                :value="formatNumber(form.costPrice)"
+                @input="handleRupiahInput('costPrice', $event)"
+                type="text"
+                class="w-full border rounded-lg pl-10 pr-3 py-2"
+              />
+            </div>
+          </div>
+
+          <!-- RETAIL PRICE -->
+          <div>
+            <label class="text-sm text-gray-600">Retail Price</label>
+
+            <div class="relative mt-1">
+              <span
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+              >
+                Rp
+              </span>
+
+              <input
+                :value="formatNumber(form.retailPrice)"
+                @input="handleRupiahInput('retailPrice', $event)"
+                type="text"
+                class="w-full border rounded-lg pl-10 pr-3 py-2"
+              />
+            </div>
+          </div>
+
+          <!-- WHOLESALE PRICE -->
+          <div>
+            <label class="text-sm text-gray-600">Wholesale Price</label>
+
+            <div class="relative mt-1">
+              <span
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+              >
+                Rp
+              </span>
+
+              <input
+                :value="formatNumber(form.wholesalePrice)"
+                @input="handleRupiahInput('wholesalePrice', $event)"
+                type="text"
+                :disabled="isInject"
+                class="w-full border rounded-lg pl-10 pr-3 py-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <p v-if="isInject" class="text-xs text-gray-400 mt-1">
+              Inject products do not support wholesale pricing
+            </p>
+          </div>
+        </div>
+        <!-- MARGIN INFO -->
+        <div
+          class="mt-4 p-4 rounded-lg bg-gray-50 border flex justify-between text-sm"
+        >
+          <div>
+            <p class="text-gray-500">Margin Amount</p>
+            <p class="font-semibold text-green-600">
+              {{ formatRupiah(marginAmount) }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-gray-500">Margin Percent</p>
+            <p class="font-semibold text-blue-600">
+              {{ marginPercent.toFixed(2) }}%
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div class="border-b border-dashed mt-5 w-full"></div>
+      <!-- INVENTORY -->
+      <div>
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">Inventory</h2>
 
-      <!-- Harga -->
-      <h1 class="font-medium mb-7 mt-5">Info Harga</h1>
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="purchase-price" class="block text-left text-gray-500">Harga Modal</Label>
-        <Input id="purchase-price" v-model="purchasePrice.model" placeholder="Harga Modal" type="tel" class="w-full text-sm" required />
-        <p v-if="typeProduct" class="text-sm text-muted-foreground">Harga tanpa voucher kosong ya.</p>
-      </div>
-      <div v-if="!typeProduct" class="grid gap-2 w-full mb-4">
-        <Label for="agent-price" class="block text-left text-gray-500">Harga Agen</Label>
-        <Input id="agent-price" v-model="agentPrice.model" placeholder="Harga Agen" type="tel" class="w-full text-sm" required />
-      </div>
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="retail-price" class="block text-left text-gray-500">Harga Jual</Label>
-        <Input id="retail-price" v-model="retailPrice.model" placeholder="Harga Jual" type="tel" class="w-full text-sm" required />
-      </div>
-      
-      <!-- Stok -->
-      <div v-if="!typeProduct">
-        <div class="border-b border-dashed mt-5 w-full"></div>
-        <h1 class="font-medium mb-7 mt-5">Info Stok</h1>
-        <div class="grid gap-2 w-full mb-4">
-          <Label for="stok" class="block text-left text-gray-500">Stok Produk</Label>
-          <Input id="stok" v-model="stok" placeholder="Stok Produk" type="tel" class="w-full text-sm" required />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm text-gray-600">Minimum Stock</label>
+            <input
+              v-model.number="form.minimumStok"
+              type="number"
+              :disabled="isInject"
+              class="w-full mt-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">Status</label>
+
+            <Select v-model="form.status">
+              <SelectTrigger class="w-full mt-1">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="active"> Active </SelectItem>
+
+                <SelectItem value="inactive"> Inactive </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div class="grid gap-2 w-full mb-4">
-          <Label for="minimumStok" class="block text-left text-gray-500">Minimum Stok</Label>
-          <Input id="minimumStok" v-model="minimumStok" placeholder="Minimum Stok Produk" type="tel" class="w-full text-sm" required />
-        </div>
+      </div>
+
+      <!-- ACTION -->
+      <div class="flex justify-end gap-3 pt-4 border-t">
+        <!-- CANCEL -->
+        <button
+          @click="router.push('/product/list-product')"
+          class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+
+        <!-- SAVE & DUPLICATE (ONLY CREATE) -->
+        <button
+          v-if="!isEdit"
+          @click="submitProduct(true)"
+          :disabled="loading"
+          class="px-4 py-2 border hover:bg-gray-100 rounded-lg text-sm"
+        >
+          <Copy class="w-4 h-4" />
+          Save & Duplicate
+        </button>
+
+        <!-- SAVE -->
+        <button
+          @click="submitProduct(false)"
+          :disabled="loading"
+          class="px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-lg font-medium text-sm"
+        >
+          {{ loading ? "Saving..." : isEdit ? "Save Changes" : "Save Product" }}
+        </button>
       </div>
     </div>
+  </div>
+  <AlertDialog v-model:open="showSuccessDialog">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle> Product Added Successfully </AlertDialogTitle>
 
-    <!-- Submit Button -->
-    <div class="w-full mt-6">
-      <Button type="submit" class="w-full text-white">Simpan Data</Button>
-    </div>
-  </form>
+        <AlertDialogDescription>
+          Produk <b>{{ lastProductName }}</b> berhasil ditambahkan. Silakan
+          tambahkan produk berikutnya.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+
+      <AlertDialogFooter>
+        <AlertDialogAction @click="showSuccessDialog = false">
+          OK
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
