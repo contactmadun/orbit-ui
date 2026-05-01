@@ -20,6 +20,7 @@ import { ref, computed, onMounted, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 import api from "@/axios";
 
+const activeTooltip = ref(null);
 const productRange = ref("thisMonth");
 const router = useRouter();
 const isReady = ref(false);
@@ -277,6 +278,10 @@ onMounted(() => {
   setTimeout(() => {
     animatedWidths.value = topProducts.value.map((p) => p.percent);
   }, 200);
+
+  window.addEventListener("click", () => {
+    activeTooltip.value = null;
+  });
 });
 
 onMounted(async () => {
@@ -359,11 +364,11 @@ watchEffect(() => {
 <template>
   <div class="space-y-6 bg-gray-50 min-h-screen">
     <!-- Header -->
-    <div class="flex justify-between items-center">
+    <div
+      class="flex flex-col md:flex-row md:justify-between md:items-center gap-3"
+    >
       <div>
-        <div class="flex justify-between items-center">
-          <h1 class="text-2xl font-semibold">Overview POS</h1>
-        </div>
+        <h1 class="text-2xl font-semibold">Overview POS</h1>
         <p class="text-slate-500 text-sm">
           Jelajahi informasi mengenai bisnis anda disini
         </p>
@@ -697,12 +702,22 @@ watchEffect(() => {
               >
                 <div
                   class="w-full rounded-md relative group"
+                  @click.stop="
+                    activeTooltip =
+                      activeTooltip === item.label ? null : item.label
+                  "
                   :class="item.isPeak ? 'bg-red-500' : 'bg-slate-300'"
                   :style="{ height: item.percent + '%' }"
                 >
                   <!-- TOOLTIP -->
                   <div
-                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap bg-slate-900 text-white opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 pointer-events-none z-10"
+                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap bg-slate-900 text-white transition-all duration-200 z-10"
+                    :class="[
+                      activeTooltip === item.label
+                        ? 'opacity-100 scale-100'
+                        : 'opacity-0 scale-95 pointer-events-none',
+                      'group-hover:opacity-100 group-hover:scale-100',
+                    ]"
                   >
                     <div class="font-semibold">
                       {{ getInterval(item.label).text }}
@@ -804,6 +819,9 @@ watchEffect(() => {
               v-for="item in providerData"
               :key="item.name"
               class="relative group flex items-center gap-2 text-sm text-slate-700 cursor-default"
+              @click.stop="
+                activeTooltip = activeTooltip === item.name ? null : item.name
+              "
             >
               <!-- DOT COLOR -->
               <div
@@ -818,7 +836,13 @@ watchEffect(() => {
 
               <!-- TOOLTIP -->
               <div
-                class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap bg-slate-900 text-white opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 pointer-events-none z-10"
+                class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap bg-slate-900 text-white transition-all duration-200 z-10"
+                :class="[
+                  activeTooltip === item.name
+                    ? 'opacity-100 scale-100'
+                    : 'opacity-0 scale-95 pointer-events-none',
+                  'group-hover:opacity-100 group-hover:scale-100',
+                ]"
               >
                 <div class="font-medium">{{ item.name }}</div>
                 <div class="text-slate-300">{{ item.value }} transaksi</div>
