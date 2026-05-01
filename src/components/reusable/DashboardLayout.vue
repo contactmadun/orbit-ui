@@ -51,7 +51,7 @@ const { isFullscreen } = useFullscreen();
     >
       <div
         v-if="sidebarOpen && !isFullscreen"
-        class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r lg:hidden"
+        class="fixed inset-y-0 left-0 z-50 w-[286px] lg:w-64 bg-white border-r lg:hidden"
       >
         <Sidebar />
       </div>

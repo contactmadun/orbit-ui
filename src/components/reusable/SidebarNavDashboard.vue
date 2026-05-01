@@ -172,7 +172,7 @@ const filteredMenus = computed(() => {
 
 <template>
   <aside
-    class="w-64 bg-white border-r flex flex-col fixed left-0 top-0 h-screen"
+    class="w-[286px] lg:w-64 bg-white border-r flex flex-col fixed left-0 top-0 h-screen"
   >
     <!-- LOGO -->
     <div
