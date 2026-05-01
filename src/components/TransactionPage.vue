@@ -1,621 +1,1753 @@
 <script setup>
-import { ref, computed, onMounted } from "vue"
-import { Check, ChevronsUpDown, Search } from "lucide-vue-next"
-import Button from './ui/button/Button.vue'
-import { RouterLink } from "vue-router"
-import { useUserStore } from '@/stores'
-import { useCartStore } from "@/stores/cart"
-import { useCurrencyInput } from "@/composable/useCurrencyInput"
-import { useRouter } from 'vue-router'
-import Label from './ui/label/Label.vue'
-import { Switch } from "@/components/ui/switch"
-import Input from './ui/input/Input.vue'
-import api from '../axios'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import api from "@/axios";
 import {
-  NumberField,
-  NumberFieldContent,
-  NumberFieldDecrement,
-  NumberFieldIncrement,
-  NumberFieldInput
-} from "@/components/ui/number-field"
+  ShoppingCart,
+  Smartphone,
+  ArrowLeftRight,
+  Banknote,
+  Search,
+  Package,
+  Expand,
+  Shrink,
+} from "lucide-vue-next";
 import {
-  Combobox,
-  ComboboxInput,
-  ComboboxList,
-  ComboboxEmpty,
-  ComboboxGroup,
-  ComboboxItem,
-  ComboboxItemIndicator,
-  ComboboxAnchor,
-  ComboboxTrigger
-} from "@/components/ui/combobox"
-import { Textarea } from "@/components/ui/textarea"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import CartDrawer from "@/components/reusable/CartDrawer.vue";
+import CloseCashierDrawer from "@/components/reusable/CloseCashierDrawer.vue";
+import { useRouter } from "vue-router";
+import { useFullscreen } from "@/composable/useFullscreen";
 
-
-const tabs = ["Transaksi Produk", "Transaksi Manual", "Transfer", "Tarik Tunai"]
-const activeTab = ref("Transaksi Produk")
-
-// ambil store
-const cartStore = useCartStore()
-const userStore = useUserStore();
+/* ========================= STATE ========================= */
+let debounceTimer = null;
+const isMobile = window.innerWidth < 768;
+const viewMode = ref("table"); // 'table' | 'card'
+const showCustomer = ref(false);
+const showDiscount = ref(false);
+const showPaymentDialog = ref(false);
+const showCloseCashier = ref(false);
+const cashierBalances = ref([]);
+const loadingClose = ref(false);
+const activeTab = ref("product");
+const priceType = ref("retail");
+const search = ref("");
+const loadingProducts = ref(false);
+const cart = ref([]);
+const showCartModal = ref(false);
+const selectedIds = ref([]);
+const currentPage = ref(1);
+const limit = ref(10);
+const loadingPay = ref(false);
+const pagination = ref({
+  total: 0,
+  totalPages: 1,
+});
+const increaseQty = (p) => {
+  addToCart(p);
+};
+const funds = ref([]);
+const loadingFunds = ref(false);
+const { isFullscreen } = useFullscreen();
 const router = useRouter();
 
-// --- form transaksi manual
-const retailPrice = useCurrencyInput()
-const purchasePrice = useCurrencyInput()
-const note = ref("")
-const funds = ref([]) // isi dari sumber dana
-const selectedFund = ref(null)
+const toggleFullscreen = () => {
+  isFullscreen.value = !isFullscreen.value;
+};
 
-// --- tarik tunai
-const nominalWd = useCurrencyInput()
-const nominalTf = useCurrencyInput()
-const nominalAdmin = useCurrencyInput()
-const nominalAdminBank = useCurrencyInput()
-const adminInside = ref(false) // pakai v-model untuk Switch
-
-async function getActiveSession() {
+const checkActiveSession = async () => {
   try {
-    const res = await api.get(`/cashier/session/${userStore.storeId}`)
-    // if (!res.ok) throw new Error("Gagal fetch active session")
-    const data = res.data; 
-    console.log(res.data);
+    const res = await api.get("/cashier/session");
 
-    if (data && data.id) {
-      cartStore.cashierSessionId = data.id
-      console.log("Active cashier session set:", data.id)
-    } else {
-      console.warn("Tidak ada active session ditemukan")
+    if (!res.data.data) {
+      // 🔥 kalau tidak ada session → lempar ke open
+      router.replace("/pos/open-session");
     }
   } catch (err) {
-    console.error("Error getActiveSession:", err)
+    console.error(err);
+    router.replace("/pos/open-session");
   }
-}
+};
 
-
-// ambil fund except default
-async function getExceptDefaultFund() {
+// Section Closing Cashier
+const fetchCashierBalances = async () => {
   try {
-    const res = await api.get(`/fund/except-default/${userStore.storeId}`)
-      funds.value = res.data.map(f => ({label: f.name, value: f.id}))
+    const res = await api.get("/cashier/balance");
+
+    cashierBalances.value = res.data.data.map((b) => ({
+      ...b,
+
+      // ❌ JANGAN isi dari system
+      // closingBalance: b.systemBalance || 0,
+
+      // ✅ HARUS NULL / EMPTY
+      closingBalance: null,
+    }));
   } catch (err) {
-    console.error("Error getDefaultFund:", err)
+    console.error(err);
   }
-}
+};
 
-// ambil fund default
-async function getDefaultFund() {
+const openCloseCashier = async () => {
+  await fetchCashierBalances();
+  showCloseCashier.value = true;
+};
+
+const submitCloseCashier = async (payload) => {
+  loadingClose.value = true;
+
   try {
-    const res = await api.get(`/fund/default/${userStore.storeId}`)
-    if (res.data && res.data.id) {
-      defaultFundId.value = res.data.id
-      console.log("Default fund source:", res.data)
-    } else {
-      console.warn("Tidak ada fund default ditemukan")
+    await api.post("/cashier/close", payload);
+
+    alert("Kasir berhasil ditutup");
+
+    showCloseCashier.value = false;
+
+    // 🔥 refresh state (optional tapi penting)
+    router.replace("/pos/open-session");
+  } catch (err) {
+    console.error(err);
+    alert("Gagal tutup kasir");
+  } finally {
+    loadingClose.value = false;
+  }
+};
+
+const fetchFunds = async () => {
+  loadingFunds.value = true;
+  try {
+    const res = await api.get("/fund/pos"); // 🔥 clean
+    funds.value = res.data.data;
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loadingFunds.value = false;
+  }
+};
+
+const FundExcludeCash = computed(() =>
+  funds.value.filter(
+    (f) => f.type !== "cash" && !f.isDefault, // 🔥 exclude kas utama
+  ),
+);
+
+const withdraw = ref({
+  amount: 0,
+  admin: 0,
+  isAdminIncluded: false, // 🔥 switch
+  fundTarget: "",
+  notes: "",
+});
+
+const withdrawCashOut = computed(() => {
+  const amount = Number(withdraw.value.amount || 0);
+  const admin = Number(withdraw.value.admin || 0);
+
+  // 🔥 admin di dalam → kas keluar full
+  if (withdraw.value.isAdminIncluded) {
+    return amount;
+  }
+
+  // 🔥 admin dipotong → kas keluar lebih kecil
+  return amount - admin;
+});
+
+const withdrawFundIn = computed(() => {
+  const amount = Number(withdraw.value.amount || 0);
+  const admin = Number(withdraw.value.admin || 0);
+
+  // 🔥 admin di dalam → saldo masuk lebih besar
+  if (withdraw.value.isAdminIncluded) {
+    return amount + admin;
+  }
+
+  return amount;
+});
+
+const handleAfterPay = (data) => {
+  // 🔥 hanya handle hasil, JANGAN call API lagi
+
+  cart.value = [];
+
+  payment.value = {
+    amountPaid: 0,
+    method: "",
+    status: "paid",
+    customerName: "",
+    fundSource: "",
+  };
+
+  showCartModal.value = false;
+};
+
+const handlePay = async () => {
+  if (loadingPay.value) return;
+
+  // 🔥 VALIDASI
+  if (isInject.value && !payment.value.fundSource) {
+    alert("Sumber dana wajib dipilih");
+    return;
+  }
+
+  if (payment.value.status === "paid") {
+    if (!payment.value.method) {
+      alert("Metode pembayaran wajib dipilih");
+      return;
     }
-  } catch (err) {
-    console.error("Error getDefaultFund:", err)
+
+    if ((payment.value.amountPaid || 0) < finalTotal.value) {
+      alert("Uang bayar kurang");
+      return;
+    }
   }
-}
 
-// produk yg ada di keranjang
-const cartProducts = computed(() => {
-  return cartStore.products.filter(p => cartStore.cart[p.id])
-})
+  if (payment.value.status === "unpaid" && !payment.value.customerName) {
+    alert("Nama pelanggan wajib diisi");
+    return;
+  }
 
-// cek apakah ada produk inject di keranjang
-const hasInjectProduct = computed(() => {
-  return cartProducts.value.some(p => p.typeProduct === "inject")
-})
+  // 🔥 PAYLOAD SAMA PERSIS DENGAN CART DRAWER
+  const payload = {
+    cart: cart.value.map((item) => ({
+      id: item.id,
+      name: item.name,
+      qty: Number(item.qty),
+      price: Number(item.price),
+      costPrice: Number(item.costPrice || 0),
+      type: item.type,
+    })),
 
-// --- tambahan: customer info
-const customerName = ref("")
-const phoneNumber = ref("")
+    totalAmount: Number(finalTotal.value),
+    isInject: isInject.value,
 
-// --- tambahan: catatan & status
-const statusTransaksi = ref("Lunas") // default Lunas
-const defaultFundId = ref(null) // fund source default dari backend
+    payment: {
+      status: payment.value.status,
+      method: payment.value.method || null,
+      amountPaid: Number(payment.value.amountPaid) || 0,
+      customerName: payment.value.customerName || null,
+      fundSource: payment.value.fundSource || null,
+    },
 
-// fungsi update jumlah
-function updateQty(id, val) {
-  if (val <= 0) {
-    const newCart = { ...cartStore.cart }
-    delete newCart[id]
-    cartStore.cart = newCart
+    change: change.value,
+  };
+
+  try {
+    loadingPay.value = true;
+
+    console.log("SEND API:", payload);
+
+    await api.post("/sale", payload);
+
+    alert("Transaksi berhasil");
+
+    // 🔥 RESET STATE
+    cart.value = [];
+    payment.value = {
+      amountPaid: 0,
+      method: "",
+      status: "paid",
+      customerName: "",
+      fundSource: "",
+    };
+
+    showPaymentDialog.value = false;
+    showCartModal.value = false;
+  } catch (err) {
+    console.error(err);
+    alert(err?.response?.data?.message || "Gagal transaksi");
+  } finally {
+    loadingPay.value = false;
+  }
+};
+
+const handleWithdrawSubmit = async () => {
+  try {
+    await api.post("/sale/withdraw", {
+      withdraw: withdraw.value,
+    });
+
+    // reset
+    withdraw.value = {
+      amount: 0,
+      admin: 0,
+      isAdminIncluded: false,
+      fundTarget: "",
+      notes: "",
+    };
+
+    alert("Transaksi berhasil");
+  } catch (err) {
+    console.error(err);
+    alert("Gagal transaksi");
+  }
+};
+
+const transfer = ref({
+  amount: 0,
+  adminBank: 0,
+  adminCustomer: 0,
+  fundSource: "",
+  status: "paid",
+  customerName: "",
+  customerPhone: "",
+  notes: "",
+});
+
+const totalReceive = computed(() => {
+  return (
+    Number(transfer.value.amount || 0) +
+    Number(transfer.value.adminCustomer || 0)
+  );
+});
+
+const totalDebit = computed(() => {
+  return (
+    Number(transfer.value.amount || 0) + Number(transfer.value.adminBank || 0)
+  );
+});
+
+const handleTransferSubmit = async () => {
+  try {
+    await api.post("/sale/transfer", {
+      transfer: transfer.value,
+    });
+
+    // reset
+    transfer.value = {
+      amount: 0,
+      adminBank: 0,
+      adminCustomer: 0,
+      fundSource: "",
+      status: "paid",
+      customerName: "",
+      customerPhone: "",
+      notes: "",
+    };
+
+    alert("Transaksi berhasil");
+  } catch (err) {
+    console.error(err);
+    alert("Gagal transaksi");
+  }
+};
+
+const manual = ref({
+  price: 0,
+  cost: 0,
+  status: "paid", // default
+  customerName: "",
+  customerPhone: "",
+  fundSource: "",
+  notes: "",
+});
+
+const handleManualSubmit = async () => {
+  try {
+    await api.post("/sale/manual", {
+      manual: manual.value,
+    });
+
+    // reset
+    manual.value = {
+      price: 0,
+      cost: 0,
+      status: "paid",
+      customerName: "",
+      customerPhone: "",
+      fundSource: "",
+      notes: "",
+    };
+
+    alert("Transaksi berhasil");
+  } catch (err) {
+    console.error(err);
+    alert("Gagal transaksi");
+  }
+};
+
+const openPayment = () => {
+  if (isFullscreen.value) {
+    showPaymentDialog.value = true;
   } else {
-    cartStore.cart = { ...cartStore.cart, [id]: val }
+    showCartModal.value = true;
   }
-}
+};
 
-// total transaksi
-const totalTransaksi = computed(() => {
-  return cartProducts.value.reduce((sum, p) => {
-    return sum + (p.retailPrice * cartStore.cart[p.id])
-  }, 0)
-})
+const decreaseQty = (p) => {
+  const item = getCartItem(p.id);
+  if (!item) return;
 
-async function trxWithdrawal() {
+  if (item.qty > 1) {
+    item.qty--;
+  } else {
+    cart.value = cart.value.filter((i) => i.id !== p.id);
+  }
+};
+
+const payment = ref({
+  amountPaid: 0,
+  method: "cash",
+  status: "paid", // 🔥 default
+  customerName: "",
+  fundSource: "",
+});
+
+/* ========================= MENU ========================= */
+const menus = [
+  { name: "Produk", value: "product", icon: ShoppingCart },
+  { name: "Manual", value: "manual", icon: Smartphone },
+  { name: "Transfer", value: "transfer", icon: ArrowLeftRight },
+  { name: "Tarik Tunai", value: "withdraw", icon: Banknote },
+];
+
+const changeTab = (val) => (activeTab.value = val);
+const isActive = (menu) => activeTab.value === menu.value;
+
+/* ========================= DATA ========================= */
+const products = ref([]);
+
+const totalAmount = computed(() =>
+  cart.value.reduce((sum, i) => sum + i.qty * i.price, 0),
+);
+
+const totalQty = computed(() => cart.value.reduce((sum, i) => sum + i.qty, 0));
+
+const change = computed(() => {
+  return payment.value.amountPaid - finalTotal.value;
+});
+
+/* ========================= API ========================= */
+async function fetchProducts() {
+  loadingProducts.value = true;
+
   try {
-    const payload = {
-      storeId: userStore.storeId,
-      cashier_session_id: cartStore.cashierSessionId,
-      fund_source_id: selectedFund.value?.value,
-      amount: nominalWd.parse() || 0,
-      adminFee: nominalAdmin.parse() || 0,
-      adminInside: adminInside.value, // true kalau admin di dalam
-      note: note.value,
-      status: "success",
-      transaction_type: "withdrawal"
-    }
+    const res = await api.get("/products", {
+      params: {
+        search: search.value,
+        page: currentPage.value,
+        limit: limit.value,
+      },
+    });
 
-    // console.log(payload);
-    const { data } = await api.post("/transaction/withdrawal", payload)
-    console.log("Transaksi tarik tunai berhasil:", data)
-    router.push("/")
+    products.value = res.data.data;
+    pagination.value = res.data.pagination;
   } catch (err) {
-    console.error("Gagal tarik tunai:", err)
+    console.error(err);
+  } finally {
+    setTimeout(() => {
+      loadingProducts.value = false;
+    }, 300); // smooth seperti inventory
   }
 }
 
-async function trxTransfer() {
+/* ========================= METHODS ========================= */
+const getPrice = (p) =>
+  priceType.value === "retail"
+    ? p.retailPrice || p.retail
+    : p.wholesalePrice || p.wholesale;
+
+const getCartItem = (id) => cart.value.find((i) => i.id === id);
+
+const addToCart = (p) => {
+  const existing = getCartItem(p.id);
+  if (existing) {
+    existing.qty++;
+  } else {
+    cart.value.push({
+      id: p.id,
+      name: p.name || p.productName,
+      price: getPrice(p),
+      costPrice: p.costPrice || p.cost || 0, // 🔥 TAMBAH INI
+      qty: 1,
+      type: p.typeProduct,
+    });
+  }
+};
+
+// Script Dialog
+// ================= DISCOUNT =================
+const discount = ref({
+  type: "nominal",
+  value: 0,
+});
+
+const finalTotal = computed(() => {
+  let total = Number(totalAmount.value) || 0;
+
+  if (discount.value.value > 0) {
+    if (discount.value.type === "percent") {
+      total -= (total * discount.value.value) / 100;
+    } else {
+      total -= discount.value.value;
+    }
+  }
+
+  return total < 0 ? 0 : total;
+});
+
+const paymentMethods = computed(() => {
+  const types = funds.value.map((f) => f.type);
+  return [...new Set(types)];
+});
+
+const injectFunds = computed(() =>
+  funds.value.filter((f) => f.type !== "cash" && !f.isDefault),
+);
+
+const suggestedAmounts = computed(() => {
+  const total = finalTotal.value || 0;
+  if (!total) return [];
+
+  const bases = [1000, 2000, 5000, 10000, 20000, 50000, 100000];
+  const suggestions = new Set();
+
+  bases.forEach((base) => {
+    const rounded = Math.ceil(total / base) * base;
+    suggestions.add(rounded);
+  });
+
+  suggestions.add(total);
+  suggestions.add(Math.ceil(total / 1000) * 1000);
+
+  return Array.from(suggestions)
+    .filter((v) => v >= total)
+    .sort((a, b) => a - b)
+    .slice(0, 5);
+});
+
+const customers = ref([]);
+const searchCustomer = ref("");
+
+const fetchCustomers = async () => {
   try {
-    const payload = {
-      storeId: userStore.storeId,
-      cashier_session_id: cartStore.cashierSessionId,
-      fund_source_id: selectedFund.value?.value,
-      amount: nominalTf.parse() || 0,
-      adminFee: nominalAdmin.parse() || 0,
-      adminBank: nominalAdminBank.parse() || 0,
-      note: note.value,
-      status: "success",
-      transaction_type: "transfer"
-    }
-
-    // console.log(payload); 
-    const { data } = await api.post("/transaction/transfer", payload)
-    console.log("Transaksi transfer tunai berhasil:", data)
-    router.push("/")
+    const res = await api.get("/customer");
+    customers.value = res.data.data;
   } catch (err) {
-    console.error("Gagal transfer tunai:", err)
+    console.error(err);
   }
-}
+};
 
-// --- transaksi manual
-async function trxManual() {
-  try {
-    const payload = {
-      storeId: userStore.storeId,
-      cashier_session_id: cartStore.cashierSessionId,
-      fund_source_id: defaultFundId.value,
-      resourceFund: selectedFund.value?.value,
-      customerName: customerName.value,
-      phoneNumber: phoneNumber.value,
-      items: [
-        {
-          product_id: null, // manual tidak ada product id
-          qty: 1,
-          cost_price: purchasePrice.parse() || 0,
-          price: retailPrice.parse(),
-          total: retailPrice.parse(),
-          profit: retailPrice.parse() - (purchasePrice.parse() || 0)
-        }
-      ],
-      note: note.value,
-      status: statusTransaksi.value, // manual langsung dianggap lunas
-      transaction_type: "manual"
-    }
-    // console.log(payload)
-    const { data } = await api.post("/transaction/manual", payload)
-    console.log("Transaksi manual berhasil:", data)
-    router.push("/")
-  } catch (err) {
-    console.error("Gagal transaksi manual:", err)
+const filteredCustomers = computed(() => {
+  if (!searchCustomer.value) return customers.value;
+
+  return customers.value.filter((c) =>
+    c.name.toLowerCase().includes(searchCustomer.value.toLowerCase()),
+  );
+});
+
+const isInject = computed(() =>
+  cart.value.some((item) => item.type === "inject"),
+);
+
+const changePage = (page) => {
+  currentPage.value = page;
+  fetchProducts();
+};
+
+const formatCurrency = (val) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(val || 0);
+
+/* ========================= KEYBOARD ========================= */
+const handleKeydown = (e) => {
+  if (e.key === "F2" && !isFullscreen.value) {
+    e.preventDefault();
+    showCartModal.value = true;
   }
-}
 
-// simpan transaksi
-async function simpanTransaksi() {
-  try {
-    // siapkan payload transaksi
-    const payload = {
-      storeId: userStore.storeId, // pastikan ada di store
-      cashier_session_id: cartStore.cashierSessionId, // pastikan ambil dari session aktif
-      fund_source_id: defaultFundId.value, // default laci atau pilihan user
-      resourceFund: selectedFund.value?.value,
-      customerName: customerName.value,
-      phoneNumber: phoneNumber.value,
-      items: cartProducts.value.map(p => ({
-        product_id: p.id,
-        qty: cartStore.cart[p.id],
-        cost_price: p.purchasePrice,
-        price: p.retailPrice,
-        total: p.retailPrice * cartStore.cart[p.id],
-        profit: (p.retailPrice - p.purchasePrice) * cartStore.cart[p.id],
-      })),
-      note: note.value,
-      status: statusTransaksi.value,
-      transaction_type: "penjualan",
-    }
-
-    // console.log(payload);
-    const { data } = await api.post("/transaction", payload)
-    customerName.value = ""
-    phoneNumber.value = ""
-    note.value = ""
-    router.push("/")
-    // reset cart
-    cartStore.resetCart()
-  } catch (err) {
-    console.error("Gagal simpan transaksi:", err)
+  if (e.key === "Escape") {
+    showCartModal.value = false;
+    showPaymentDialog.value = false;
   }
-}
+
+  if (e.ctrlKey && e.key === "f") {
+    e.preventDefault();
+    document.getElementById("search-input")?.focus();
+  }
+
+  if (e.key === "F4") {
+    e.preventDefault();
+    cart.value = [];
+  }
+};
 
 onMounted(() => {
-  getActiveSession()
-  getDefaultFund()
-  getExceptDefaultFund()
-})
+  checkActiveSession();
+  fetchProducts();
+  fetchFunds();
+  window.addEventListener("keydown", handleKeydown);
+});
+
+onMounted(() => {
+  if (isMobile) {
+    viewMode.value = "card";
+  }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeydown);
+});
+
+watch(priceType, () => {
+  cart.value = cart.value.map((item) => {
+    const product = products.value.find((p) => p.id === item.id);
+    if (!product) return item;
+
+    return {
+      ...item,
+      price: getPrice(product),
+    };
+  });
+});
+
+watch(search, (val) => {
+  clearTimeout(debounceTimer);
+
+  debounceTimer = setTimeout(() => {
+    currentPage.value = 1; // reset ke page 1 saat search
+    fetchProducts();
+  }, 400); // debounce biar gak spam API
+});
+
+watch(viewMode, (val) => {
+  localStorage.setItem("pos_view_mode", val);
+});
+
+onMounted(() => {
+  const saved = localStorage.getItem("pos_view_mode");
+  if (saved) viewMode.value = saved;
+});
 </script>
 
 <template>
-  <div class="w-full border-b">
-    <nav class="flex justify-around">
-      <button
-        v-for="tab in tabs"
-        :key="tab"
-        @click="activeTab = tab"
-        class="relative px-3 py-2 text-sm font-medium text-gray-700"
-        :class="activeTab === tab ? 'text-black' : 'text-gray-500'"
-      >
-        {{ tab }}
-        <!-- Underline active -->
-        <span
-          v-if="activeTab === tab"
-          class="absolute left-0 right-0 -bottom-[1px] h-0.5 bg-blue-500 rounded"
-        ></span>
-      </button>
-    </nav>
+  <!-- HEADER -->
+  <div class="mb-4">
+    <div class="flex items-end justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-slate-800">Transactions</h1>
+        <p class="text-slate-500 text-sm">
+          Lakukan pencatatan transaksi di sini
+        </p>
+      </div>
+      <div>
+        <button
+          @click="openCloseCashier"
+          class="flex bg-white hover:bg-gray-100 items-center gap-2 px-3 py-1 text-sm border rounded-md transition-all"
+        >
+          Tutup Kasir
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- Content -->
-  <div class="p-4">
-    <div v-if="activeTab === 'Transaksi Produk'">
-      <div class="flex justify-between">
-        <h4>Produk</h4>
-        <RouterLink v-if="cartProducts.length === 0" to="/list-product">
-          <Button variant="outline">Pilih Produk</Button>
-        </RouterLink>
-      </div>
-      <!-- daftar produk -->
-      <div v-for="p in cartProducts" :key="p.id" class="border-b py-3">
-        <div class="flex justify-between items-start">
-          <div>
-            <p class="font-medium">{{ p.name }}</p>
-            <p class="text-blue-600 font-semibold">
-              Rp{{ p.retailPrice.toLocaleString("id-ID") }}
-            </p>
-            <p class="text-sm text-gray-500">Modal : Rp{{ p.purchasePrice.toLocaleString("id-ID") }}</p>
+  <!-- TABS -->
+  <div class="mb-4 flex justify-between items-center">
+    <div class="inline-flex bg-gray-100 p-1 rounded-full">
+      <button
+        v-for="menu in menus"
+        :key="menu.value"
+        @click="changeTab(menu.value)"
+        class="flex items-center gap-2 px-4 py-1.5 text-sm rounded-full transition"
+        :class="
+          isActive(menu)
+            ? 'bg-white shadow text-slate-900'
+            : 'text-slate-600 hover:text-slate-900'
+        "
+      >
+        <component v-if="isActive(menu)" :is="menu.icon" class="w-4 h-4" />
+        {{ menu.name }}
+      </button>
+    </div>
+
+    <!-- RIGHT ACTION -->
+    <div class="flex gap-2">
+      <!-- TOGGLE VIEW -->
+      <button
+        @click="viewMode = viewMode === 'table' ? 'card' : 'table'"
+        class="flex items-center justify-center p-2 border rounded-lg bg-white hover:bg-gray-50"
+        title="Ubah tampilan"
+      >
+        <span v-if="viewMode === 'table'">📊</span>
+        <span v-else>🧩</span>
+      </button>
+      <!-- FULLSCREEN BUTTON -->
+      <button
+        @click="toggleFullscreen"
+        class="flex items-center justify-center p-2 border rounded-lg bg-white hover:bg-gray-50"
+      >
+        <component :is="isFullscreen ? Shrink : Expand" class="w-4 h-4" />
+      </button>
+    </div>
+  </div>
+
+  <div class="flex-1 min-h-0 flex flex-col">
+    <div
+      v-if="viewMode === 'table'"
+      class="flex-1 min-h-0 overflow-auto rounded-xl"
+    >
+      <!-- TABLE LAMA KAMU DI SINI -->
+      <div
+        v-if="activeTab === 'product'"
+        :class="isFullscreen ? 'flex h-full gap-4' : 'flex flex-col h-full'"
+      >
+        <!-- LEFT: PRODUCT -->
+        <div
+          :class="
+            isFullscreen ? 'w-[65%] flex flex-col' : 'w-full flex flex-col'
+          "
+        >
+          <div class="bg-white border rounded-2xl h-full p-5 flex flex-col">
+            <!-- HEADER -->
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+              <div class="flex items-center gap-3">
+                <div class="p-3 bg-slate-50 border rounded-xl">
+                  <Package class="w-5 h-5 text-blue-900" />
+                </div>
+                <div>
+                  <h3 class="text-xl font-semibold text-gray-900">
+                    Transaksi Produk
+                  </h3>
+                  <p class="text-sm text-slate-500">
+                    Klik produk untuk menambahkan ke cart
+                  </p>
+                </div>
+              </div>
+
+              <!-- RIGHT -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- SEARCH -->
+                <div class="relative">
+                  <Search
+                    class="w-4 h-4 absolute left-3 top-2.5 text-gray-400"
+                  />
+                  <input
+                    id="search-input"
+                    v-model="search"
+                    type="text"
+                    placeholder="Cari produk..."
+                    class="pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <!-- SELECT PRICE TYPE -->
+                <Select v-model="priceType">
+                  <SelectTrigger class="w-[140px] h-[38px] text-sm">
+                    <SelectValue placeholder="Pilih Harga" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="retail">Umum</SelectItem>
+                    <SelectItem value="wholesale">Grosir</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <!-- CART BUTTON -->
+                <button
+                  v-if="!isFullscreen"
+                  @click="showCartModal = true"
+                  class="relative inline-flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 text-sm text-slate-500"
+                >
+                  <ShoppingCart class="w-4 h-4" />
+                  F2
+
+                  <!-- BADGE -->
+                  <span
+                    v-if="totalQty"
+                    class="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                  >
+                    {{ totalQty }}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="flex-1 min-h-0 flex flex-col">
+              <div class="flex-1 min-h-0 overflow-auto rounded-xl">
+                <table class="w-full text-sm border border-gray-200">
+                  <!-- HEADER -->
+                  <thead class="bg-gray-50 text-slate-500">
+                    <tr class="divide-x divide-gray-200">
+                      <!-- CHECKBOX ALL -->
+                      <th class="px-3 py-2 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          :checked="
+                            selectedIds.length === products.length &&
+                            products.length > 0
+                          "
+                          @change="
+                            selectedIds = $event.target.checked
+                              ? products.map((p) => p.id)
+                              : []
+                          "
+                        />
+                      </th>
+
+                      <th class="px-3 py-2 text-left">SKU</th>
+                      <th class="px-3 py-2 text-left">Produk</th>
+
+                      <!-- NEW STOCK COLUMN -->
+                      <th class="px-3 py-2 text-center">Stok</th>
+
+                      <th class="px-3 py-2 text-right">Harga Konsumen</th>
+                      <th class="px-3 py-2 text-right">Harga Grosir</th>
+                      <th class="px-3 py-2 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+
+                  <!-- BODY -->
+                  <tbody class="divide-y divide-gray-200">
+                    <!-- LOADING -->
+                    <template v-if="loadingProducts">
+                      <tr
+                        v-for="i in 8"
+                        :key="'skeleton-' + i"
+                        class="animate-pulse divide-x divide-gray-200"
+                      >
+                        <!-- CHECKBOX -->
+                        <td class="px-3 py-2 text-center">
+                          <div
+                            class="h-4 w-4 bg-gray-200 rounded mx-auto"
+                          ></div>
+                        </td>
+
+                        <!-- SKU -->
+                        <td class="px-3 py-2">
+                          <div class="h-4 w-20 bg-gray-200 rounded"></div>
+                        </td>
+
+                        <!-- PRODUCT -->
+                        <td class="px-3 py-2">
+                          <div class="h-4 w-40 bg-gray-200 rounded"></div>
+                        </td>
+
+                        <!-- STOCK -->
+                        <td class="px-3 py-2 text-center">
+                          <div
+                            class="h-4 w-10 bg-gray-200 rounded mx-auto"
+                          ></div>
+                        </td>
+
+                        <!-- RETAIL -->
+                        <td class="px-3 py-2">
+                          <div
+                            class="h-4 w-24 bg-gray-200 rounded ml-auto"
+                          ></div>
+                        </td>
+
+                        <!-- WHOLESALE -->
+                        <td class="px-3 py-2">
+                          <div
+                            class="h-4 w-24 bg-gray-200 rounded ml-auto"
+                          ></div>
+                        </td>
+
+                        <!-- ACTION -->
+                        <td class="px-3 py-2 text-center">
+                          <div
+                            class="h-6 w-12 bg-gray-200 rounded mx-auto"
+                          ></div>
+                        </td>
+                      </tr>
+                    </template>
+
+                    <!-- DATA -->
+                    <template v-else>
+                      <tr
+                        v-for="p in products"
+                        :key="p.id"
+                        @click="addToCart(p)"
+                        class="cursor-pointer transition divide-x divide-gray-200"
+                        :class="
+                          getCartItem(p.id) ? 'bg-blue-50' : 'hover:bg-gray-50'
+                        "
+                      >
+                        <!-- CHECKBOX -->
+                        <td class="px-3 py-2 text-center">
+                          <input
+                            type="checkbox"
+                            :value="p.id"
+                            v-model="selectedIds"
+                            @click.stop
+                          />
+                        </td>
+
+                        <!-- SKU -->
+                        <td class="px-3 py-2 text-xs text-gray-400">
+                          {{ p.sku || "-" }}
+                        </td>
+
+                        <!-- NAME -->
+                        <td class="px-3 py-2">
+                          {{ p.name || p.productName }}
+                        </td>
+
+                        <!-- STOCK -->
+                        <td class="px-3 py-2 text-center">
+                          <div
+                            class="inline-flex items-center gap-2 px-2 py-0.5 rounded-md border border-gray-200 bg-white"
+                          >
+                            <span
+                              class="w-2 h-2 rounded-full"
+                              :class="
+                                (p.stock || 0) == 0
+                                  ? 'bg-red-600'
+                                  : p.stock <= (p.minimumStock || 5)
+                                    ? 'bg-yellow-500'
+                                    : 'bg-green-600'
+                              "
+                            />
+                            <span
+                              class="text-xs font-medium"
+                              :class="
+                                (p.stock || 0) == 0
+                                  ? 'text-red-600'
+                                  : p.stock <= (p.minimumStock || 5)
+                                    ? 'text-yellow-600'
+                                    : 'text-gray-700'
+                              "
+                            >
+                              {{ p.stock || 0 }}
+                            </span>
+                          </div>
+                        </td>
+
+                        <!-- RETAIL -->
+                        <td class="px-3 py-2 text-right font-medium">
+                          {{ formatCurrency(p.retailPrice || p.retail) }}
+                        </td>
+
+                        <!-- WHOLESALE -->
+                        <td class="px-3 py-2 text-right text-gray-500">
+                          {{ formatCurrency(p.wholesalePrice || p.wholesale) }}
+                        </td>
+
+                        <!-- CART -->
+                        <!-- CART -->
+                        <td class="px-3 py-2 text-center">
+                          <div
+                            v-if="getCartItem(p.id)"
+                            class="flex items-center justify-center gap-1"
+                          >
+                            <!-- MINUS -->
+                            <button
+                              @click.stop="decreaseQty(p)"
+                              class="w-6 h-6 flex items-center justify-center border rounded-md hover:bg-gray-100"
+                            >
+                              -
+                            </button>
+
+                            <!-- QTY -->
+                            <span class="w-6 text-center text-xs font-medium">
+                              {{ getCartItem(p.id).qty }}
+                            </span>
+
+                            <!-- PLUS -->
+                            <button
+                              @click.stop="increaseQty(p)"
+                              class="w-6 h-6 flex items-center justify-center border rounded-md hover:bg-gray-100"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <!-- ADD BUTTON (kalau belum ada di cart) -->
+                          <button
+                            v-else
+                            @click.stop="addToCart(p)"
+                            class="px-2 py-1 text-xs bg-blue-900 text-white rounded-md hover:bg-blue-800"
+                          >
+                            Add
+                          </button>
+                        </td>
+                      </tr>
+                      <!-- EMPTY -->
+                      <tr v-if="!products.length">
+                        <td colspan="7" class="text-center py-6 text-gray-400">
+                          Produk tidak ditemukan
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+              <div class="flex justify-between items-center mt-3 text-sm">
+                <div>Page {{ currentPage }} / {{ pagination.totalPages }}</div>
+
+                <div class="flex gap-2">
+                  <button
+                    :disabled="currentPage === 1"
+                    @click="changePage(currentPage - 1)"
+                    class="px-3 py-1 border rounded"
+                  >
+                    Prev
+                  </button>
+
+                  <button
+                    :disabled="currentPage === pagination.totalPages"
+                    @click="changePage(currentPage + 1)"
+                    class="px-3 py-1 border rounded"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <NumberField
-            :model-value="cartStore.cart[p.id]"
-            :min="0"
-            class="flex items-center"
-            @update:model-value="val => updateQty(p.id, val)"
-          >
-            <NumberFieldContent>
-              <NumberFieldDecrement>-</NumberFieldDecrement>
-              <NumberFieldInput class="w-24 text-center" />
-              <NumberFieldIncrement>+</NumberFieldIncrement>
-            </NumberFieldContent>
-          </NumberField>
+        </div>
+        <!-- RIGHT: CART (ONLY FULLSCREEN) -->
+        <div
+          v-if="isFullscreen"
+          class="w-[35%] bg-white border rounded-2xl p-4 flex flex-col"
+        >
+          <!-- HEADER -->
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-semibold text-gray-800">Cart</h3>
+            <span class="text-sm text-gray-500"> {{ totalQty }} item </span>
+          </div>
+
+          <!-- CART LIST -->
+          <div class="flex-1 overflow-auto space-y-2">
+            <div
+              v-for="item in cart"
+              :key="item.id"
+              class="flex justify-between items-center border rounded-lg p-2"
+            >
+              <div>
+                <p class="text-sm font-medium">{{ item.name }}</p>
+                <p class="text-xs text-gray-500">
+                  {{ formatCurrency(item.price) }}
+                </p>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  @click="decreaseQty(item)"
+                  class="w-6 h-6 border rounded"
+                >
+                  -
+                </button>
+
+                <span class="text-sm w-5 text-center">
+                  {{ item.qty }}
+                </span>
+
+                <button
+                  @click="increaseQty(item)"
+                  class="w-6 h-6 border rounded"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div
+              v-if="!cart.length"
+              class="text-center text-gray-400 text-sm py-6"
+            >
+              Cart kosong
+            </div>
+          </div>
+
+          <!-- SUMMARY -->
+          <div class="border-t pt-3 mt-3 space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span>Total</span>
+              <span class="font-semibold">
+                {{ formatCurrency(totalAmount) }}
+              </span>
+            </div>
+
+            <!-- BAYAR -->
+            <button
+              @click="openPayment"
+              class="w-full bg-blue-900 text-white py-2 rounded-lg"
+            >
+              Bayar
+            </button>
+          </div>
         </div>
       </div>
-        <div v-if="cartProducts.length > 0" class="flex justify-center mt-4">
-          <RouterLink to="/list-product">
-            <Button variant="outline">+ Tambah produk</Button>
-          </RouterLink>
+    </div>
+    <div v-else class="flex-1 overflow-auto p-2">
+      <!-- LOADING -->
+      <div v-if="loadingProducts" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div
+          v-for="i in 8"
+          :key="i"
+          class="h-24 bg-gray-100 animate-pulse rounded-xl"
+        />
+      </div>
+
+      <!-- EMPTY -->
+      <div v-else-if="!products.length" class="text-center text-gray-400 py-10">
+        Produk tidak ditemukan
+      </div>
+
+      <!-- CARD -->
+      <div
+        v-else
+        class="grid gap-3"
+        :class="[
+          isFullscreen
+            ? 'grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+            : 'grid-cols-2',
+        ]"
+      >
+        <div
+          v-for="p in products"
+          :key="p.id"
+          @click="addToCart(p)"
+          class="border rounded-xl p-3 bg-white hover:shadow cursor-pointer"
+        >
+          <p class="text-sm font-medium">
+            {{ p.name || p.productName }}
+          </p>
+
+          <p class="text-blue-900 text-sm font-semibold">
+            {{ formatCurrency(getPrice(p)) }}
+          </p>
         </div>
-        <div class="mt-6 space-y-4">
-        <div v-if="hasInjectProduct" class="flex flex-col items-start mb-4">
-               <Label class="block text-left text-gray-500 mb-2">Sumber Dana Inject</Label>
-               <Combobox v-model="selectedFund" by="value">
-                 <ComboboxAnchor as-child>
-                   <ComboboxTrigger as-child>
-                     <Button variant="outline" class="w-[350px] justify-between text-gray-500 font-normal">
-                       {{ selectedFund?.label ?? 'Pilih Sumber Dana' }}
-                       <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                     </Button>
-                   </ComboboxTrigger>
-                 </ComboboxAnchor>
-     
-                 <ComboboxList class="w-[350px]">
-                   <div class="relative w-full max-w-sm items-center">
-                     <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Sumber Danaa" />
-                     <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
-                       <Search class="size-4 text-muted-foreground" />
-                     </span>
-                   </div>
-                   <ComboboxEmpty>Sumber Dana tidak ditemukan.</ComboboxEmpty>
-                   <ComboboxGroup>
-                     <ComboboxItem
-                       v-for="fund in funds"
-                       :key="fund.value"
-                       :value="fund"
-                     >
-                       {{ fund.label }}
-                       <ComboboxItemIndicator>
-                         <Check class="ml-auto h-4 w-4" />
-                       </ComboboxItemIndicator>
-                     </ComboboxItem>
-                   </ComboboxGroup>
-                 </ComboboxList>
-               </Combobox>
-             </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MANUAL ================= -->
+  <div v-if="activeTab === 'manual'" class="flex flex-col h-full">
+    <div class="bg-white border rounded-2xl p-6 max-w-xl">
+      <!-- TITLE -->
+      <div class="mb-6">
+        <h3 class="text-xl font-semibold text-gray-900">Transaksi Manual</h3>
+        <p class="text-sm text-slate-500">Input transaksi tanpa produk</p>
+      </div>
+
+      <div class="space-y-4">
+        <!-- HARGA JUAL -->
         <div>
-          <label class="block text-sm font-medium mb-1 text-gray-500">Status transaksi</label>
-          <div class="flex gap-2">
-            <Button
-              :variant="statusTransaksi === 'Lunas' ? 'default' : 'outline'"
-              class="flex-1"
-              @click="statusTransaksi = 'Lunas'"
+          <label class="text-sm font-medium text-gray-700">
+            Harga Jual <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model.number="manual.price"
+            type="number"
+            placeholder="Masukkan harga jual"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <!-- HARGA MODAL -->
+        <div>
+          <label class="text-sm font-medium text-gray-700"> Harga Modal </label>
+          <input
+            v-model.number="manual.cost"
+            type="number"
+            placeholder="Opsional"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+          />
+        </div>
+
+        <!-- STATUS -->
+        <div>
+          <label class="text-sm font-medium text-gray-700">
+            Status Transaksi
+          </label>
+
+          <div class="flex gap-2 mt-2">
+            <button
+              @click="manual.status = 'paid'"
+              :class="
+                manual.status === 'paid'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-600'
+              "
+              class="px-3 py-1.5 rounded-md text-sm"
             >
               Lunas
-            </Button>
-            <Button
-              :variant="statusTransaksi === 'Belum Lunas' ? 'default' : 'outline'"
-              class="flex-1"
-              @click="statusTransaksi = 'Belum Lunas'"
+            </button>
+
+            <button
+              @click="manual.status = 'unpaid'"
+              :class="
+                manual.status === 'unpaid'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100 text-gray-600'
+              "
+              class="px-3 py-1.5 rounded-md text-sm"
             >
               Belum Lunas
-            </Button>
+            </button>
           </div>
         </div>
-        <div v-if="statusTransaksi === 'Belum Lunas'">
-          <div class="grid gap-2 w-full mb-4">
-          <Label for="nameCostumer" class="block text-left text-gray-500">Nama Konsumen</Label>
-          <Input id="nameCostumer" v-model="customerName" placeholder="Nama Konsumen" type="text" class="w-full text-sm" required />
+
+        <!-- CONDITIONAL -->
+        <template v-if="manual.status === 'unpaid'">
+          <!-- CUSTOMER NAME -->
+          <div>
+            <label class="text-sm font-medium text-gray-700">
+              Nama Konsumen <span class="text-red-500">*</span>
+            </label>
+            <input
+              v-model="manual.customerName"
+              type="text"
+              placeholder="Nama pelanggan"
+              class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+            />
           </div>
-          <div class="grid gap-2 w-full mb-4">
-            <Label for="phoneNumber" class="block text-left text-gray-500">Nomor Telepon</Label>
-            <Input id="phoneNumber" v-model="phoneNumber" placeholder="Nomor Telepon" type="tel" class="w-full text-sm"/>
+
+          <!-- PHONE -->
+          <div>
+            <label class="text-sm font-medium text-gray-700">
+              Nomor HP <span class="text-red-500">*</span>
+            </label>
+            <input
+              v-model="manual.customerPhone"
+              type="text"
+              placeholder="08xxxx"
+              class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+            />
           </div>
-          <div class="grid w-full gap-1.5">
-          <Label for="note" class="text-gray-500">Catatan</Label>
-          <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
-          </div>
-         </div>
+        </template>
+
+        <!-- FUND SOURCE -->
+        <div>
+          <label class="text-sm font-medium text-gray-700">
+            Sumber Dana Modal
+          </label>
+
+          <select
+            v-model="manual.fundSource"
+            :disabled="manual.status === 'unpaid' || !manual.cost"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm disabled:bg-gray-100"
+          >
+            <option value="">
+              {{ loadingFunds ? "Loading..." : "Pilih sumber dana (opsional)" }}
+            </option>
+
+            <option v-for="f in FundExcludeCash" :key="f.id" :value="f.id">
+              {{ f.nameBank }}
+            </option>
+          </select>
+
+          <!-- UX NOTE -->
+          <p class="text-xs text-gray-400 mt-1">
+            Digunakan jika transaksi memiliki modal (misal beli pulsa)
+          </p>
+
+          <!-- CONDITIONAL NOTE -->
+          <p v-if="manual.status === 'unpaid'" class="text-xs text-gray-400">
+            Akan dipilih saat pembayaran dilakukan
+          </p>
         </div>
-    </div>
-    <div v-else-if="activeTab === 'Transaksi Manual'">
-      <form @submit.prevent="trxManual" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 w-full">
-    <div class="w-full">
-      <!-- Harga -->
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="retail-price" class="block text-left text-gray-500">Harga Jual</Label>
-        <Input id="retail-price" v-model="retailPrice.model" placeholder="Harga Jual" type="tel" class="w-full text-sm" required />
-      </div>
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="purchase-price" class="block text-left text-gray-500">Harga Modal (Jika Ada)</Label>
-        <Input id="purchase-price" v-model="purchasePrice.model" placeholder="Harga Modal" type="tel" class="w-full text-sm"/>
-      </div>
-      <div class="border-b border-dashed mt-5 mb-5 w-full"></div>
-      <div class="flex flex-col items-start py-4">
-               <Label class="block text-left text-gray-500 mb-2">Sumber Dana (Jika Ada)</Label>
-               <Combobox v-model="selectedFund" by="value">
-                 <ComboboxAnchor as-child>
-                   <ComboboxTrigger as-child>
-                     <Button variant="outline" class="w-[350px] justify-between text-gray-500 font-normal">
-                       {{ selectedFund?.label ?? 'Pilih Sumber Dana' }}
-                       <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                     </Button>
-                   </ComboboxTrigger>
-                 </ComboboxAnchor>
-     
-                 <ComboboxList class="w-[350px]">
-                   <div class="relative w-full max-w-sm items-center">
-                     <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Sumber Danaa" />
-                     <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
-                       <Search class="size-4 text-muted-foreground" />
-                     </span>
-                   </div>
-                   <ComboboxEmpty>Sumber Dana tidak ditemukan.</ComboboxEmpty>
-                   <ComboboxGroup>
-                     <ComboboxItem
-                       v-for="fund in funds"
-                       :key="fund.value"
-                       :value="fund"
-                     >
-                       {{ fund.label }}
-                       <ComboboxItemIndicator>
-                         <Check class="ml-auto h-4 w-4" />
-                       </ComboboxItemIndicator>
-                     </ComboboxItem>
-                   </ComboboxGroup>
-                 </ComboboxList>
-               </Combobox>
-             </div>
-      <div>
-          <label class="block text-sm font-medium mb-1 text-gray-500">Status transaksi</label>
-          <div class="flex gap-2 mb-5">
-            <Button
-              :variant="statusTransaksi === 'Lunas' ? 'default' : 'outline'"
-              class="flex-1"
-              @click="statusTransaksi = 'Lunas'"
-            >
-              Lunas
-            </Button>
-            <Button
-              :variant="statusTransaksi === 'Belum Lunas' ? 'default' : 'outline'"
-              class="flex-1"
-              @click="statusTransaksi = 'Belum Lunas'"
-            >
-              Belum Lunas
-            </Button>
-          </div>
+
+        <!-- NOTES -->
+        <div>
+          <label class="text-sm font-medium text-gray-700"> Catatan </label>
+          <textarea
+            v-model="manual.notes"
+            rows="3"
+            placeholder="Catatan transaksi..."
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+          />
         </div>
-        <div v-if="statusTransaksi === 'Belum Lunas'">
-          <div class="grid gap-2 w-full mb-4">
-          <Label for="nameCostumer" class="block text-left text-gray-500">Nama Konsumen</Label>
-          <Input id="nameCostumer" v-model="customerName" placeholder="Nama Konsumen" type="text" class="w-full text-sm" required />
-          </div>
-          <div class="grid gap-2 w-full mb-4">
-            <Label for="phoneNumber" class="block text-left text-gray-500">Nomor Telepon</Label>
-            <Input id="phoneNumber" v-model="phoneNumber" placeholder="Nomor Telepon" type="tel" class="w-full text-sm"/>
-          </div>
-         </div>
-          <div class="grid w-full gap-1.5">
-          <Label for="note" class="text-gray-500">Catatan</Label>
-          <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
-          </div>
-    </div>
-    <!-- Submit Button -->
-    <div class="w-full mt-6">
-      <Button type="submit" class="w-full text-white">Simpan Transaksi</Button>
-    </div>
-  </form>
-    </div>
-    <div v-else-if="activeTab === 'Transfer'">
-      <form @submit.prevent="trxTransfer" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 w-full">
-    <div class="w-full">
-      <!-- Harga -->
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="nominal" class="block text-left text-gray-500">Nominal Transfer</Label>
-        <Input id="nominal" v-model="nominalTf.model" placeholder="Nominal Transfer" type="tel" class="w-full text-sm" required />
+
+        <!-- ACTION -->
+        <div class="pt-4">
+          <button
+            @click="handleManualSubmit"
+            class="w-full bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-800"
+          >
+            Simpan Transaksi
+          </button>
+        </div>
       </div>
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="nominalAdminBank" class="block text-left text-gray-500">Admin Bank (Jika Ada)</Label>
-        <Input id="nominalAdminBank" v-model="nominalAdminBank.model" placeholder="Admin Bank" type="tel" class="w-full text-sm"/>
-      </div>
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="nominalAdmin" class="block text-left text-gray-500">Admin</Label>
-        <Input id="nominalAdmin" v-model="nominalAdmin.model" placeholder="Nominal Admin" type="tel" class="w-full text-sm"/>
-      </div>
-      <div class="border-b border-dashed mt-5 mb-5 w-full"></div>
-      <div class="flex flex-col items-start py-4">
-               <Label class="block text-left text-gray-500 mb-2">Sumber Dana Transfer</Label>
-               <Combobox v-model="selectedFund" by="value">
-                 <ComboboxAnchor as-child>
-                   <ComboboxTrigger as-child>
-                     <Button variant="outline" class="w-[350px] justify-between text-gray-500 font-normal">
-                       {{ selectedFund?.label ?? 'Pilih Sumber Dana' }}
-                       <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                     </Button>
-                   </ComboboxTrigger>
-                 </ComboboxAnchor>
-     
-                 <ComboboxList class="w-[350px]">
-                   <div class="relative w-full max-w-sm items-center">
-                     <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Sumber Danaa" />
-                     <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
-                       <Search class="size-4 text-muted-foreground" />
-                     </span>
-                   </div>
-                   <ComboboxEmpty>Sumber Dana tidak ditemukan.</ComboboxEmpty>
-                   <ComboboxGroup>
-                     <ComboboxItem
-                       v-for="fund in funds"
-                       :key="fund.value"
-                       :value="fund"
-                     >
-                       {{ fund.label }}
-                       <ComboboxItemIndicator>
-                         <Check class="ml-auto h-4 w-4" />
-                       </ComboboxItemIndicator>
-                     </ComboboxItem>
-                   </ComboboxGroup>
-                 </ComboboxList>
-               </Combobox>
-             </div>
-      <div class="grid w-full gap-1.5">
-        <Label for="note" class="text-gray-500">Catatan</Label>
-        <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
-        <p class="text-sm text-muted-foreground">Catatan transaksi.</p>
-      </div>
-    </div>
-    <!-- Submit Button -->
-    <div class="w-full mt-6">
-      <Button type="submit" class="w-full text-white">Simpan Transaksi</Button>
-    </div>
-  </form>
-    </div>
-    <div v-else>
-      <form @submit.prevent="trxWithdrawal" class="flex flex-col gap-3 items-start lg:justify-center mb-10 pt-5 w-full">
-    <div class="w-full">
-      <!-- Harga -->
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="nominal" class="block text-left text-gray-500">Nominal Penarikan</Label>
-        <Input id="nominal" v-model="nominalWd.model" placeholder="Nominal Tarik Tunai" type="tel" class="w-full text-sm" required />
-      </div>
-      <div class="grid gap-2 w-full mb-4">
-        <Label for="nominalAdmin" class="block text-left text-gray-500">Admin</Label>
-        <Input id="nominalAdmin" v-model="nominalAdmin.model" placeholder="Nominal Admin" type="tel" class="w-full text-sm"/>
-      </div>
-      <div class="flex items-center space-x-2">
-        <Switch id="airplane-mode" v-model="adminInside" />
-        <Label for="airplane-mode" class="text-gray-500">Admin Di Dalam</Label>
-      </div>
-      <p class="text-sm text-muted-foreground mt-1">Default admin cash atau admin di potong</p>
-      <div class="border-b border-dashed mt-5 mb-5 w-full"></div>
-      <div class="flex flex-col items-start py-4">
-               <Label class="block text-left text-gray-500 mb-2">Tujuan Dana Penarikan</Label>
-               <Combobox v-model="selectedFund" by="value">
-                 <ComboboxAnchor as-child>
-                   <ComboboxTrigger as-child>
-                     <Button variant="outline" class="w-[350px] justify-between text-gray-500 font-normal">
-                       {{ selectedFund?.label ?? 'Pilih Sumber Dana' }}
-                       <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                     </Button>
-                   </ComboboxTrigger>
-                 </ComboboxAnchor>
-     
-                 <ComboboxList class="w-[350px]">
-                   <div class="relative w-full max-w-sm items-center">
-                     <ComboboxInput class="pl-1 focus-visible:ring-0 border-0 border-b rounded-none h-10" placeholder="Cari Sumber Danaa" />
-                     <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
-                       <Search class="size-4 text-muted-foreground" />
-                     </span>
-                   </div>
-                   <ComboboxEmpty>Sumber Dana tidak ditemukan.</ComboboxEmpty>
-                   <ComboboxGroup>
-                     <ComboboxItem
-                       v-for="fund in funds"
-                       :key="fund.value"
-                       :value="fund"
-                     >
-                       {{ fund.label }}
-                       <ComboboxItemIndicator>
-                         <Check class="ml-auto h-4 w-4" />
-                       </ComboboxItemIndicator>
-                     </ComboboxItem>
-                   </ComboboxGroup>
-                 </ComboboxList>
-               </Combobox>
-             </div>
-      <div class="grid w-full gap-1.5">
-        <Label for="note" class="text-gray-500">Catatan</Label>
-        <Textarea id="note" v-model="note" placeholder="Catatan" class="text-sm" />
-        <p class="text-sm text-muted-foreground">Catatan transaksi.</p>
-      </div>
-    </div>
-    <!-- Submit Button -->
-    <div class="w-full mt-6">
-      <Button type="submit" class="w-full text-white">Simpan Transaksi</Button>
-    </div>
-  </form>
     </div>
   </div>
+
+  <!-- ================= TRANSFER ================= -->
+  <div v-if="activeTab === 'transfer'" class="flex flex-col h-full">
+    <div class="bg-white border rounded-2xl p-6 max-w-xl">
+      <!-- HEADER -->
+      <div class="mb-6">
+        <h3 class="text-xl font-semibold text-gray-900">Transaksi Transfer</h3>
+        <p class="text-sm text-slate-500">Kirim uang antar bank / saldo</p>
+      </div>
+
+      <div class="space-y-4">
+        <!-- NOMINAL -->
+        <div>
+          <label class="text-sm font-medium">Nominal Transfer *</label>
+          <input
+            v-model.number="transfer.amount"
+            type="number"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+            placeholder="Masukkan nominal"
+          />
+        </div>
+
+        <!-- ADMIN BANK -->
+        <div>
+          <label class="text-sm font-medium">Admin Bank</label>
+          <input
+            v-model.number="transfer.adminBank"
+            type="number"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+            placeholder="Biaya dari bank"
+          />
+        </div>
+
+        <!-- ADMIN CUSTOMER -->
+        <div>
+          <label class="text-sm font-medium"> Admin Konsumen (Profit) </label>
+          <input
+            v-model.number="transfer.adminCustomer"
+            type="number"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+            placeholder="Keuntungan"
+          />
+        </div>
+
+        <!-- FUND SOURCE -->
+        <div>
+          <label class="text-sm font-medium"> Sumber Dana (Debit) </label>
+
+          <select
+            v-model="transfer.fundSource"
+            :disabled="transfer.status === 'unpaid'"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="">
+              {{ loadingFunds ? "Loading..." : "Pilih sumber dana" }}
+            </option>
+
+            <option v-for="f in FundExcludeCash" :key="f.id" :value="f.id">
+              {{ f.nameBank }}
+            </option>
+          </select>
+        </div>
+
+        <!-- STATUS -->
+        <div>
+          <label class="text-sm font-medium">Status</label>
+          <div class="flex gap-2 mt-2">
+            <button
+              @click="transfer.status = 'paid'"
+              :class="
+                transfer.status === 'paid'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100'
+              "
+              class="px-3 py-1.5 rounded-md text-sm"
+            >
+              Lunas
+            </button>
+
+            <button
+              @click="transfer.status = 'unpaid'"
+              :class="
+                transfer.status === 'unpaid'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100'
+              "
+              class="px-3 py-1.5 rounded-md text-sm"
+            >
+              Belum Lunas
+            </button>
+          </div>
+        </div>
+
+        <!-- CONDITIONAL CUSTOMER -->
+        <template v-if="transfer.status === 'unpaid'">
+          <div>
+            <label class="text-sm">Nama Konsumen *</label>
+            <input
+              v-model="transfer.customerName"
+              class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div>
+            <label class="text-sm">No HP *</label>
+            <input
+              v-model="transfer.customerPhone"
+              class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+        </template>
+
+        <!-- NOTES -->
+        <div>
+          <label class="text-sm">Catatan</label>
+          <textarea
+            v-model="transfer.notes"
+            rows="3"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+          />
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="bg-gray-50 p-3 rounded-lg text-sm">
+          <div class="flex justify-between">
+            <span>Total diterima</span>
+            <span>{{ formatCurrency(totalReceive) }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Total saldo terpotong</span>
+            <span>{{ formatCurrency(totalDebit) }}</span>
+          </div>
+        </div>
+
+        <!-- ACTION -->
+        <button
+          @click="handleTransferSubmit"
+          class="w-full bg-blue-900 text-white py-2 rounded-lg"
+        >
+          Simpan Transaksi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= WITHDRAW ================= -->
+  <div v-if="activeTab === 'withdraw'" class="flex flex-col h-full">
+    <div class="bg-white border rounded-2xl p-6 max-w-xl">
+      <!-- HEADER -->
+      <div class="mb-6">
+        <h3 class="text-xl font-semibold text-gray-900">Tarik Tunai</h3>
+        <p class="text-sm text-slate-500">Tarik saldo ke rekening / e-wallet</p>
+      </div>
+
+      <div class="space-y-4">
+        <!-- NOMINAL -->
+        <div>
+          <label class="text-sm font-medium"> Nominal Penarikan * </label>
+          <input
+            v-model.number="withdraw.amount"
+            type="number"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+            placeholder="Masukkan nominal"
+          />
+        </div>
+
+        <!-- ADMIN -->
+        <div>
+          <label class="text-sm font-medium"> Admin (Keuntungan) </label>
+          <input
+            v-model.number="withdraw.admin"
+            type="number"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+            placeholder="Opsional"
+          />
+        </div>
+
+        <!-- SWITCH -->
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-700">Admin di dalam</p>
+            <p class="text-xs text-gray-400">
+              Default: admin dipotong dari nominal
+            </p>
+          </div>
+
+          <!-- gunakan komponen switch kamu -->
+          <input
+            type="checkbox"
+            v-model="withdraw.isAdminIncluded"
+            class="toggle"
+          />
+        </div>
+
+        <!-- FUND TARGET -->
+        <div>
+          <label class="text-sm font-medium"> Dana Masuk ke </label>
+
+          <select
+            v-model="withdraw.fundTarget"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="">
+              {{ loadingFunds ? "Loading..." : "Pilih akun tujuan" }}
+            </option>
+
+            <option v-for="f in FundExcludeCash" :key="f.id" :value="f.id">
+              {{ f.nameBank }}
+            </option>
+          </select>
+        </div>
+
+        <!-- NOTES -->
+        <div>
+          <label class="text-sm font-medium"> Catatan </label>
+          <textarea
+            v-model="withdraw.notes"
+            rows="3"
+            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+          />
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="bg-gray-50 p-3 rounded-lg text-sm">
+          <div class="flex justify-between">
+            <span>Kas keluar</span>
+            <span>{{ formatCurrency(withdrawCashOut) }}</span>
+          </div>
+
+          <div class="flex justify-between">
+            <span>Saldo masuk</span>
+            <span>{{ formatCurrency(withdrawFundIn) }}</span>
+          </div>
+
+          <div class="flex justify-between font-medium">
+            <span>Profit</span>
+            <span>{{ formatCurrency(withdraw.admin) }}</span>
+          </div>
+        </div>
+
+        <!-- ACTION -->
+        <button
+          @click="handleWithdrawSubmit"
+          class="w-full bg-blue-900 text-white py-2 rounded-lg"
+        >
+          Simpan Transaksi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYMENT DIALOG FULL -->
   <div
-    v-if="cartProducts.length > 0"
-    class="fixed bottom-0 left-0 right-0 border-t bg-white p-4 flex justify-between items-center"
+    v-if="showPaymentDialog"
+    class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
   >
-    <div class="flex flex-col">
-      <span class="text-sm text-gray-600">Total transaksi</span>
-      <span class="font-semibold text-gray-900">
-        Rp{{ totalTransaksi.toLocaleString("id-ID") }}
-      </span>
+    <div
+      class="bg-white w-[720px] max-h-[90vh] rounded-xl flex flex-col shadow-xl"
+    >
+      <!-- HEADER -->
+      <div class="flex justify-between items-center px-6 py-4 border-b">
+        <h3 class="text-lg font-semibold">Pembayaran</h3>
+        <button @click="showPaymentDialog = false">✕</button>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        <!-- TOTAL -->
+        <div class="text-center">
+          <p class="text-sm text-gray-500">Total Bayar</p>
+          <p class="text-3xl font-bold text-blue-900">
+            {{ formatCurrency(finalTotal) }}
+          </p>
+        </div>
+
+        <!-- STATUS -->
+        <div class="flex gap-2">
+          <button
+            @click="payment.status = 'paid'"
+            :class="
+              payment.status === 'paid'
+                ? 'bg-green-600 text-white border-green-600'
+                : 'bg-white'
+            "
+            class="flex-1 border rounded-lg py-2 font-medium"
+          >
+            Lunas
+          </button>
+
+          <button
+            @click="payment.status = 'unpaid'"
+            :class="
+              payment.status === 'unpaid'
+                ? 'bg-orange-500 text-white border-orange-500'
+                : 'bg-white'
+            "
+            class="flex-1 border rounded-lg py-2 font-medium"
+          >
+            Piutang
+          </button>
+        </div>
+
+        <!-- ================= PAID ================= -->
+        <div v-if="payment.status === 'paid'" class="space-y-4">
+          <!-- METODE -->
+          <div>
+            <label class="text-sm font-medium text-gray-700">
+              Metode Pembayaran
+            </label>
+            <select
+              v-model="payment.method"
+              class="mt-1 w-full border rounded-lg px-3 py-2 capitalize"
+            >
+              <option value="">Pilih metode</option>
+              <option
+                v-for="m in paymentMethods"
+                :key="m"
+                :value="m"
+                class="capitalize"
+              >
+                {{ m }}
+              </option>
+            </select>
+          </div>
+
+          <!-- SUMBER DANA -->
+          <div v-if="isInject">
+            <label class="text-sm font-medium text-gray-700">
+              Sumber Dana
+            </label>
+            <select
+              v-model="payment.fundSource"
+              class="mt-1 w-full border rounded-lg px-3 py-2"
+            >
+              <option value="">Pilih sumber dana</option>
+              <option v-for="f in injectFunds" :key="f.id" :value="f.id">
+                {{ f.nameBank || f.nameAccount || f.type }}
+              </option>
+            </select>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-gray-700"> Diskon </label>
+
+            <div class="flex gap-2">
+              <!-- TYPE -->
+              <select
+                v-model="discount.type"
+                class="w-[120px] border rounded-lg px-2 py-2"
+              >
+                <option value="nominal">Rp</option>
+                <option value="percent">%</option>
+              </select>
+
+              <!-- VALUE -->
+              <input
+                type="number"
+                v-model="discount.value"
+                placeholder="Masukkan diskon"
+                class="flex-1 border rounded-lg px-3 py-2"
+              />
+            </div>
+          </div>
+
+          <!-- SUGGEST -->
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="amt in suggestedAmounts"
+              :key="amt"
+              @click="payment.amountPaid = amt"
+              class="px-3 py-1 border rounded-lg hover:bg-gray-100"
+            >
+              {{ formatCurrency(amt) }}
+            </button>
+          </div>
+
+          <!-- INPUT BAYAR -->
+          <div>
+            <label class="text-sm font-medium text-gray-700">
+              Nominal Bayar
+            </label>
+            <input
+              v-model.number="payment.amountPaid"
+              type="number"
+              class="mt-1 w-full border rounded-lg px-3 py-2 text-lg"
+            />
+          </div>
+
+          <!-- CHANGE -->
+          <div class="flex justify-between text-lg font-semibold">
+            <span>Kembalian</span>
+            <span :class="change < 0 ? 'text-red-500' : 'text-green-600'">
+              {{ formatCurrency(change) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- ================= PIUTANG ================= -->
+        <div v-else class="space-y-4">
+          <div>
+            <label class="text-sm font-medium text-gray-700">
+              Nama Pelanggan
+            </label>
+            <input
+              v-model="payment.customerName"
+              class="mt-1 w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+        </div>
+
+        <!-- ================= CUSTOMER (COMBOBOX STYLE SIMPLE) ================= -->
+        <div>
+          <label class="text-sm font-medium text-gray-700"> Pelanggan </label>
+
+          <input
+            v-model="searchCustomer"
+            placeholder="Cari pelanggan..."
+            class="mt-1 w-full border rounded-lg px-3 py-2"
+          />
+
+          <div class="max-h-32 overflow-y-auto border rounded-lg mt-2">
+            <div
+              v-for="c in filteredCustomers"
+              :key="c.id"
+              @click="payment.customerName = c.name"
+              class="p-2 text-sm hover:bg-gray-100 cursor-pointer"
+            >
+              {{ c.name }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="p-4 border-t flex gap-2 bg-white sticky bottom-0">
+        <button
+          @click="showPaymentDialog = false"
+          class="flex-1 border rounded-lg py-3"
+        >
+          Batal
+        </button>
+
+        <button
+          @click="handlePay"
+          class="flex-1 bg-blue-900 text-white rounded-lg py-3 font-semibold"
+        >
+          Bayar
+        </button>
+      </div>
     </div>
-    <Button class="bg-pink-600 hover:bg-pink-700 text-white" @click="simpanTransaksi">
-      Simpan Transaksi
-    </Button>
   </div>
+
+  <!-- CART MODAL -->
+  <CartDrawer
+    v-if="!isFullscreen"
+    :show="showCartModal"
+    :cart="cart"
+    :totalAmount="totalAmount"
+    :payment="payment.value"
+    :isInject="isInject"
+    @close="showCartModal = false"
+    @clear-cart="cart = []"
+    @pay="handleAfterPay"
+    @update:payment="
+      (val) => {
+        payment.value = {
+          ...payment.value,
+          ...val,
+        };
+      }
+    "
+  />
+
+  <CloseCashierDrawer
+    :show="showCloseCashier"
+    :balances="cashierBalances"
+    :loading="loadingClose"
+    @close="showCloseCashier = false"
+    @submit="submitCloseCashier"
+  />
 </template>
