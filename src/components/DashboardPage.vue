@@ -422,7 +422,9 @@ onMounted(() => {
         </div>
       </div>
       <!-- HEADER -->
-      <div class="flex justify-between items-center mb-6">
+      <div
+        class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-2"
+      >
         <div>
           <h3 class="text-lg font-semibold text-slate-800">Revenue Trend</h3>
           <p class="text-sm text-slate-500">
@@ -431,7 +433,7 @@ onMounted(() => {
           </p>
         </div>
 
-        <div class="text-right">
+        <div class="text-left md:text-right">
           <p class="text-xs text-slate-500">Total</p>
           <p class="text-sm font-semibold text-blue-600">
             Rp {{ formatRupiah(totalRevenueMonth) }}
@@ -440,29 +442,31 @@ onMounted(() => {
       </div>
 
       <!-- CHART -->
-      <div class="h-64 flex items-end gap-2">
-        <div
-          v-for="(d, i) in revenueChart"
-          :key="i"
-          class="flex-1 flex flex-col items-center"
-        >
-          <!-- BAR -->
-          <div class="w-full flex items-end justify-center h-52">
-            <div
-              class="w-3 rounded-md bg-blue-500 transition-all duration-700 ease-out hover:bg-blue-600 cursor-pointer"
-              :style="{
-                height: animated ? (d.total / maxRevenue) * 100 + '%' : '0%',
-              }"
-              @mouseenter="(e) => showTooltip(e, d)"
-              @mousemove="moveTooltip"
-              @mouseleave="hideTooltip"
-            ></div>
-          </div>
+      <div class="overflow-x-auto pb-2">
+        <div class="h-64 flex items-end gap-2 min-w-[600px] md:min-w-0">
+          <div
+            v-for="(d, i) in revenueChart"
+            :key="i"
+            class="flex-1 flex flex-col items-center"
+          >
+            <!-- BAR -->
+            <div class="w-full flex items-end justify-center h-52">
+              <div
+                class="w-3 rounded-md bg-blue-500 transition-all duration-700 ease-out hover:bg-blue-600 cursor-pointer"
+                :style="{
+                  height: animated ? (d.total / maxRevenue) * 100 + '%' : '0%',
+                }"
+                @mouseenter="(e) => showTooltip(e, d)"
+                @mousemove="moveTooltip"
+                @mouseleave="hideTooltip"
+              ></div>
+            </div>
 
-          <!-- LABEL -->
-          <span class="text-[10px] text-slate-400 mt-2">
-            {{ new Date(d.date).getDate() }}
-          </span>
+            <!-- LABEL -->
+            <span class="text-[10px] text-slate-400 mt-2">
+              {{ new Date(d.date).getDate() }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
