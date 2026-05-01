@@ -36,7 +36,7 @@ const handleReset = async () => {
   <div class="h-screen grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
 
     <!-- LEFT SIDE (DESKTOP ONLY) -->
-    <div class="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-blue-600 to-blue-500 text-white">
+    <div class="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-blue-800 to-blue-500 text-white">
       <div>
         <h1 class="text-5xl font-bold mb-6 mt-40">
           Lupa Kata Sandi?<br />
@@ -108,7 +108,7 @@ const handleReset = async () => {
             Ingat kata sandi?
             <RouterLink
               to="/login"
-              class="text-sm font-semibold text-blue-600 hover:underline hover:text-blue-900"
+              class="text-sm font-semibold text-blue-700 hover:underline hover:text-blue-900"
             >
               Kembali ke Login
             </RouterLink>
