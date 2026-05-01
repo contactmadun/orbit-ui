@@ -73,8 +73,8 @@ const { isFullscreen } = useFullscreen();
         :class="[
           'space-y-6 overflow-x-hidden min-w-0',
           isFullscreen
-            ? 'p-4 sm:p-2' // 🔥 FULL EDGE
-            : 'pt-16 p-4 sm:p-2 lg:p-6 lg:pt-20',
+            ? 'p-3 lg:p-4' // 🔥 FULL EDGE
+            : 'pt-16 p-2 lg:p-6 lg:pt-20',
         ]"
       >
         <slot />
