@@ -4,10 +4,9 @@
 </script>
 
 <template>
-  <header>
-  </header>
+  <header></header>
 
-  <main>
+  <main class="w-full max-w-full overflow-x-hidden">
     <router-view />
   </main>
 </template>
