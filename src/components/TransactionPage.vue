@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import CartDrawer from "@/components/reusable/CartDrawer.vue";
+import MobileCartDrawer from "@/components/reusable/MobileCartDrawer.vue";
 import CloseCashierDrawer from "@/components/reusable/CloseCashierDrawer.vue";
 import { useRouter } from "vue-router";
 import { useFullscreen } from "@/composable/useFullscreen";
@@ -1916,7 +1917,7 @@ onMounted(() => {
 
   <!-- CART MODAL -->
   <CartDrawer
-    v-if="!isFullscreen"
+    v-if="!isFullscreen && !isMobile"
     :show="showCartModal"
     :cart="cart"
     :totalAmount="totalAmount"
@@ -1933,6 +1934,25 @@ onMounted(() => {
         };
       }
     "
+  />
+
+  <MobileCartDrawer
+    v-else-if="isMobile"
+    :open="showCartModal"
+    :cart="cart"
+    :total-amount="totalAmount"
+    :total-qty="totalQty"
+    :payment="payment"
+    :loading-pay="loadingPay"
+    :payment-methods="paymentMethods"
+    :suggested-amounts="suggestedAmounts"
+    :final-total="finalTotal"
+    :change="change"
+    :format-currency="formatCurrency"
+    @close="showCartModal = false"
+    @increase="increaseQty"
+    @decrease="decreaseQty"
+    @pay="handlePay"
   />
 
   <CloseCashierDrawer
