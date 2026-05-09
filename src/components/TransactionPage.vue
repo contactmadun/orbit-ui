@@ -1158,7 +1158,7 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      <div v-else class="flex-1 min-h-0 p-2">
+      <div v-else class="flex-1 min-h-0 p-2 pb-28">
         <!-- SEARCH -->
         <div class="sticky top-0 z-10 bg-gray-50 pb-1">
           <div class="relative">
@@ -1281,6 +1281,34 @@ onMounted(() => {
           </div>
         </div>
       </div>
+      <!-- MOBILE FLOATING CHECKOUT -->
+      <transition name="slide-up">
+        <div
+          v-if="currentViewMode === 'card' && totalQty > 0"
+          class="fixed bottom-3 left-3 right-3 z-50"
+        >
+          <div
+            class="bg-white border shadow-xl rounded-2xl px-4 py-3 flex items-center justify-between"
+          >
+            <!-- LEFT -->
+            <div class="min-w-0">
+              <p class="text-xs text-slate-500">{{ totalQty }} item dipilih</p>
+
+              <p class="font-semibold text-slate-800 truncate">
+                {{ formatCurrency(totalAmount) }}
+              </p>
+            </div>
+
+            <!-- BUTTON -->
+            <button
+              @click="showCartModal = true"
+              class="bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-medium active:scale-95 transition"
+            >
+              Bayar
+            </button>
+          </div>
+        </div>
+      </transition>
     </template>
   </div>
 
@@ -1915,3 +1943,16 @@ onMounted(() => {
     @submit="submitCloseCashier"
   />
 </template>
+
+<style>
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.25s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+</style>
