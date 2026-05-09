@@ -1949,10 +1949,21 @@ onMounted(() => {
     :final-total="finalTotal"
     :change="change"
     :format-currency="formatCurrency"
+    :is-inject="isInject"
+    :inject-funds="injectFunds"
+    :customers="customers"
     @close="showCartModal = false"
     @increase="increaseQty"
     @decrease="decreaseQty"
     @pay="handlePay"
+    @update:payment="
+      (val) => {
+        payment = {
+          ...payment,
+          ...val,
+        };
+      }
+    "
   />
 
   <CloseCashierDrawer
