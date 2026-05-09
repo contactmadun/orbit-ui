@@ -25,7 +25,10 @@ import { useFullscreen } from "@/composable/useFullscreen";
 
 /* ========================= STATE ========================= */
 let debounceTimer = null;
-const isMobile = window.innerWidth < 768;
+const isMobile = ref(false);
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 1024;
+};
 const viewMode = ref("table"); // 'table' | 'card'
 const showCustomer = ref(false);
 const showDiscount = ref(false);
@@ -54,6 +57,10 @@ const funds = ref([]);
 const loadingFunds = ref(false);
 const { isFullscreen } = useFullscreen();
 const router = useRouter();
+
+const currentViewMode = computed(() => {
+  return isMobile.value ? "card" : viewMode.value;
+});
 
 const toggleFullscreen = () => {
   isFullscreen.value = !isFullscreen.value;
@@ -579,20 +586,19 @@ const handleKeydown = (e) => {
 };
 
 onMounted(() => {
+  checkMobile();
+
   checkActiveSession();
   fetchProducts();
   fetchFunds();
-  window.addEventListener("keydown", handleKeydown);
-});
 
-onMounted(() => {
-  if (isMobile) {
-    viewMode.value = "card";
-  }
+  window.addEventListener("keydown", handleKeydown);
+  window.addEventListener("resize", checkMobile);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleKeydown);
+  window.removeEventListener("resize", checkMobile);
 });
 
 watch(priceType, () => {
@@ -671,14 +677,14 @@ onMounted(() => {
     <!-- RIGHT ACTION -->
     <div class="hidden lg:flex gap-2">
       <!-- TOGGLE VIEW -->
-      <button
+      <!-- <button
         @click="viewMode = viewMode === 'table' ? 'card' : 'table'"
         class="flex items-center justify-center p-2 border rounded-lg bg-white hover:bg-gray-50"
         title="Ubah tampilan"
       >
         <span v-if="viewMode === 'table'">📊</span>
         <span v-else>🧩</span>
-      </button>
+      </button> -->
 
       <!-- FULLSCREEN BUTTON -->
       <button
@@ -692,7 +698,7 @@ onMounted(() => {
 
   <div class="flex-1 min-h-0 flex flex-col">
     <div
-      v-if="viewMode === 'table'"
+      v-if="currentViewMode === 'table'"
       class="flex-1 min-h-0 overflow-auto rounded-xl"
     >
       <!-- TABLE LAMA KAMU DI SINI -->
