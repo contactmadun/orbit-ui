@@ -490,7 +490,12 @@ const handleMobileScroll = async () => {
 
     try {
       currentPage.value++;
-      await fetchProducts();
+
+      // minimum loading time
+      await Promise.all([
+        fetchProducts(),
+        new Promise((resolve) => setTimeout(resolve, 500)),
+      ]);
     } finally {
       mobileLoadingMore.value = false;
     }
