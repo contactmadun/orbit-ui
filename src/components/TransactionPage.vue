@@ -29,6 +29,8 @@ const isMobile = ref(false);
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 1024;
 };
+const mobileLoadingMore = ref(false);
+const mobileFinished = ref(false);
 const viewMode = ref("table"); // 'table' | 'card'
 const showCustomer = ref(false);
 const showDiscount = ref(false);
@@ -429,9 +431,11 @@ const change = computed(() => {
 
 /* ========================= API ========================= */
 async function fetchProducts() {
-  loadingProducts.value = true;
-
   try {
+    if (currentPage.value === 1) {
+      loadingProducts.value = true;
+    }
+
     const res = await api.get("/products", {
       params: {
         search: search.value,
@@ -440,16 +444,58 @@ async function fetchProducts() {
       },
     });
 
-    products.value = res.data.data;
+    const newData = res.data.data || [];
+
+    if (currentViewMode.value === "card" && currentPage.value > 1) {
+      products.value.push(...newData);
+    } else {
+      products.value = newData;
+    }
+
     pagination.value = res.data.pagination;
+
+    mobileFinished.value = currentPage.value >= res.data.pagination.totalPages;
   } catch (err) {
     console.error(err);
   } finally {
-    setTimeout(() => {
-      loadingProducts.value = false;
-    }, 300); // smooth seperti inventory
+    loadingProducts.value = false;
   }
 }
+
+const handleMobileScroll = async () => {
+  if (currentViewMode.value !== "card") return;
+
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+  const windowHeight = window.innerHeight;
+
+  const fullHeight = document.documentElement.scrollHeight;
+
+  const nearBottom = scrollTop + windowHeight >= fullHeight - 200;
+
+  console.log("SCROLL", {
+    scrollTop,
+    windowHeight,
+    fullHeight,
+    nearBottom,
+  });
+
+  if (
+    nearBottom &&
+    !mobileLoadingMore.value &&
+    !mobileFinished.value &&
+    !loadingProducts.value
+  ) {
+    mobileLoadingMore.value = true;
+
+    try {
+      currentPage.value++;
+      await fetchProducts();
+    } finally {
+      mobileLoadingMore.value = false;
+    }
+  }
+};
 
 /* ========================= METHODS ========================= */
 const getPrice = (p) =>
@@ -594,11 +640,19 @@ onMounted(() => {
 
   window.addEventListener("keydown", handleKeydown);
   window.addEventListener("resize", checkMobile);
+
+  // TAMBAH INI
+  window.addEventListener("scroll", handleMobileScroll, {
+    passive: true,
+  });
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleKeydown);
   window.removeEventListener("resize", checkMobile);
+
+  // TAMBAH
+  window.removeEventListener("scroll", handleMobileScroll);
 });
 
 watch(priceType, () => {
@@ -618,6 +672,8 @@ watch(search, (val) => {
 
   debounceTimer = setTimeout(() => {
     currentPage.value = 1; // reset ke page 1 saat search
+    products.value = [];
+    mobileFinished.value = false;
     fetchProducts();
   }, 400); // debounce biar gak spam API
 });
@@ -1097,10 +1153,24 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      <div v-else class="flex-1 overflow-auto p-2">
-        <!-- LOADING -->
+      <div v-else class="flex-1 min-h-0 p-2">
+        <!-- SEARCH -->
+        <div class="sticky top-0 z-10 bg-gray-50 pb-1">
+          <div class="relative">
+            <Search class="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+
+            <input
+              id="search-input-mobile"
+              v-model="search"
+              type="text"
+              placeholder="Cari produk..."
+              class="w-full pl-9 pr-3 py-2.5 border rounded-xl bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+        </div>
+        <!-- FIRST LOADING -->
         <div
-          v-if="loadingProducts"
+          v-if="loadingProducts && currentPage === 1"
           class="grid grid-cols-2 md:grid-cols-4 gap-3"
         >
           <div
@@ -1119,28 +1189,90 @@ onMounted(() => {
         </div>
 
         <!-- CARD -->
-        <div
-          v-else
-          class="grid gap-3"
-          :class="[
-            isFullscreen
-              ? 'grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-              : 'grid-cols-2',
-          ]"
-        >
+        <div v-else class="flex flex-col gap-3 mt-2">
           <div
             v-for="p in products"
             :key="p.id"
             @click="addToCart(p)"
-            class="border rounded-xl p-3 bg-white hover:shadow cursor-pointer"
+            class="bg-white border rounded-2xl p-3 flex items-center gap-3 active:scale-[0.98] transition cursor-pointer"
           >
-            <p class="text-sm font-medium">
-              {{ p.name || p.productName }}
-            </p>
+            <!-- AVATAR -->
+            <div
+              class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0 border"
+            >
+              <span class="text-sm font-bold text-slate-700 uppercase">
+                {{
+                  (p.name || p.productName || "")
+                    .split(" ")
+                    .slice(0, 2)
+                    .map((w) => w[0])
+                    .join("")
+                }}
+              </span>
+            </div>
 
-            <p class="text-blue-900 text-sm font-semibold">
-              {{ formatCurrency(getPrice(p)) }}
-            </p>
+            <!-- CONTENT -->
+            <div class="flex-1 min-w-0">
+              <!-- PRODUCT -->
+              <p class="text-sm font-semibold text-slate-800 truncate">
+                {{ p.name || p.productName }}
+              </p>
+
+              <!-- PRICE -->
+              <p class="text-sm font-bold text-blue-900 mt-0.5">
+                {{ formatCurrency(getPrice(p)) }}
+              </p>
+
+              <!-- STOCK -->
+              <div class="mt-1 flex items-center gap-2">
+                <span
+                  class="w-2 h-2 rounded-full"
+                  :class="
+                    (p.stock || 0) == 0
+                      ? 'bg-red-500'
+                      : p.stock <= (p.minimumStock || 5)
+                        ? 'bg-yellow-500'
+                        : 'bg-green-500'
+                  "
+                />
+
+                <span
+                  class="text-xs"
+                  :class="
+                    (p.stock || 0) == 0
+                      ? 'text-red-600'
+                      : p.stock <= (p.minimumStock || 5)
+                        ? 'text-yellow-600'
+                        : 'text-slate-500'
+                  "
+                >
+                  Stok {{ p.stock || 0 }}
+                </span>
+              </div>
+            </div>
+
+            <!-- QTY BADGE -->
+            <div
+              v-if="getCartItem(p.id)"
+              class="w-8 h-8 rounded-full bg-blue-900 text-white text-xs font-semibold flex items-center justify-center shrink-0"
+            >
+              {{ getCartItem(p.id).qty }}
+            </div>
+          </div>
+          <!-- LOAD MORE -->
+          <div
+            v-if="mobileLoadingMore"
+            class="py-4 text-center text-sm text-gray-400"
+          >
+            Memuat produk...
+          </div>
+
+          <!-- END -->
+          <div
+            v-if="mobileFinished && products.length"
+            class="py-4 text-center text-xs text-gray-400"
+          >
+            Semua produk sudah ditampilkan
           </div>
         </div>
       </div>
