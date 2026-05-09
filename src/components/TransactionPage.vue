@@ -494,7 +494,7 @@ const handleMobileScroll = async () => {
       // minimum loading time
       await Promise.all([
         fetchProducts(),
-        new Promise((resolve) => setTimeout(resolve, 500)),
+        new Promise((resolve) => setTimeout(resolve, 1500)),
       ]);
     } finally {
       mobileLoadingMore.value = false;
@@ -1269,7 +1269,7 @@ onMounted(() => {
             v-if="mobileLoadingMore"
             class="py-4 text-center text-sm text-gray-400"
           >
-            Memuat produk...
+            <span>Memuat produk...</span>
           </div>
 
           <!-- END -->
