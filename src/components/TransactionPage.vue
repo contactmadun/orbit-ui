@@ -648,13 +648,15 @@ onMounted(() => {
   </div>
 
   <!-- TABS -->
-  <div class="mb-4 flex justify-between items-center">
-    <div class="inline-flex bg-gray-100 p-1 rounded-full">
+  <div class="mb-4 flex justify-between items-center gap-2">
+    <div
+      class="inline-flex w-full lg:w-auto bg-gray-100 p-1 lg:rounded-full rounded-sm"
+    >
       <button
         v-for="menu in menus"
         :key="menu.value"
         @click="changeTab(menu.value)"
-        class="flex items-center gap-2 px-4 py-1.5 text-sm rounded-full transition"
+        class="flex-1 lg:flex-none flex items-center justify-center lg:gap-2 gap-1 lg:px-4 px-1 py-1.5 text-sm lg:rounded-full rounded-sm transition"
         :class="
           isActive(menu)
             ? 'bg-white shadow text-slate-900'
@@ -667,7 +669,7 @@ onMounted(() => {
     </div>
 
     <!-- RIGHT ACTION -->
-    <div class="flex gap-2">
+    <div class="hidden lg:flex gap-2">
       <!-- TOGGLE VIEW -->
       <button
         @click="viewMode = viewMode === 'table' ? 'card' : 'table'"
@@ -677,6 +679,7 @@ onMounted(() => {
         <span v-if="viewMode === 'table'">📊</span>
         <span v-else>🧩</span>
       </button>
+
       <!-- FULLSCREEN BUTTON -->
       <button
         @click="toggleFullscreen"
