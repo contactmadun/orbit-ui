@@ -697,436 +697,454 @@ onMounted(() => {
   </div>
 
   <div class="flex-1 min-h-0 flex flex-col">
-    <div
-      v-if="currentViewMode === 'table'"
-      class="flex-1 min-h-0 overflow-auto rounded-xl"
-    >
-      <!-- TABLE LAMA KAMU DI SINI -->
+    <!-- PRODUCT -->
+    <template v-if="activeTab === 'product'">
       <div
-        v-if="activeTab === 'product'"
-        :class="isFullscreen ? 'flex h-full gap-4' : 'flex flex-col h-full'"
+        v-if="currentViewMode === 'table'"
+        class="flex-1 min-h-0 overflow-auto rounded-xl"
       >
-        <!-- LEFT: PRODUCT -->
+        <!-- TABLE LAMA KAMU DI SINI -->
         <div
-          :class="
-            isFullscreen ? 'w-[65%] flex flex-col' : 'w-full flex flex-col'
-          "
+          :class="isFullscreen ? 'flex h-full gap-4' : 'flex flex-col h-full'"
         >
-          <div class="bg-white border rounded-2xl h-full p-5 flex flex-col">
-            <!-- HEADER -->
-            <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
-              <div class="flex items-center gap-3">
-                <div class="p-3 bg-slate-50 border rounded-xl">
-                  <Package class="w-5 h-5 text-blue-900" />
-                </div>
-                <div>
-                  <h3 class="text-xl font-semibold text-gray-900">
-                    Transaksi Produk
-                  </h3>
-                  <p class="text-sm text-slate-500">
-                    Klik produk untuk menambahkan ke cart
-                  </p>
-                </div>
-              </div>
-
-              <!-- RIGHT -->
-              <div class="flex items-center gap-2 flex-wrap">
-                <!-- SEARCH -->
-                <div class="relative">
-                  <Search
-                    class="w-4 h-4 absolute left-3 top-2.5 text-gray-400"
-                  />
-                  <input
-                    id="search-input"
-                    v-model="search"
-                    type="text"
-                    placeholder="Cari produk..."
-                    class="pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                  />
+          <!-- LEFT: PRODUCT -->
+          <div
+            :class="
+              isFullscreen ? 'w-[65%] flex flex-col' : 'w-full flex flex-col'
+            "
+          >
+            <div class="bg-white border rounded-2xl h-full p-5 flex flex-col">
+              <!-- HEADER -->
+              <div
+                class="flex justify-between items-center mb-4 flex-wrap gap-4"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="p-3 bg-slate-50 border rounded-xl">
+                    <Package class="w-5 h-5 text-blue-900" />
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-semibold text-gray-900">
+                      Transaksi Produk
+                    </h3>
+                    <p class="text-sm text-slate-500">
+                      Klik produk untuk menambahkan ke cart
+                    </p>
+                  </div>
                 </div>
 
-                <!-- SELECT PRICE TYPE -->
-                <Select v-model="priceType">
-                  <SelectTrigger class="w-[140px] h-[38px] text-sm">
-                    <SelectValue placeholder="Pilih Harga" />
-                  </SelectTrigger>
+                <!-- RIGHT -->
+                <div class="flex items-center gap-2 flex-wrap">
+                  <!-- SEARCH -->
+                  <div class="relative">
+                    <Search
+                      class="w-4 h-4 absolute left-3 top-2.5 text-gray-400"
+                    />
+                    <input
+                      id="search-input"
+                      v-model="search"
+                      type="text"
+                      placeholder="Cari produk..."
+                      class="pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
 
-                  <SelectContent>
-                    <SelectItem value="retail">Umum</SelectItem>
-                    <SelectItem value="wholesale">Grosir</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <!-- SELECT PRICE TYPE -->
+                  <Select v-model="priceType">
+                    <SelectTrigger class="w-[140px] h-[38px] text-sm">
+                      <SelectValue placeholder="Pilih Harga" />
+                    </SelectTrigger>
 
-                <!-- CART BUTTON -->
-                <button
-                  v-if="!isFullscreen"
-                  @click="showCartModal = true"
-                  class="relative inline-flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 text-sm text-slate-500"
-                >
-                  <ShoppingCart class="w-4 h-4" />
-                  F2
+                    <SelectContent>
+                      <SelectItem value="retail">Umum</SelectItem>
+                      <SelectItem value="wholesale">Grosir</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                  <!-- BADGE -->
-                  <span
-                    v-if="totalQty"
-                    class="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                  <!-- CART BUTTON -->
+                  <button
+                    v-if="!isFullscreen"
+                    @click="showCartModal = true"
+                    class="relative inline-flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 text-sm text-slate-500"
                   >
-                    {{ totalQty }}
-                  </span>
-                </button>
+                    <ShoppingCart class="w-4 h-4" />
+                    F2
+
+                    <!-- BADGE -->
+                    <span
+                      v-if="totalQty"
+                      class="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full"
+                    >
+                      {{ totalQty }}
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <!-- TABLE -->
-            <div class="flex-1 min-h-0 flex flex-col">
-              <div class="flex-1 min-h-0 overflow-auto rounded-xl">
-                <table class="w-full text-sm border border-gray-200">
-                  <!-- HEADER -->
-                  <thead class="bg-gray-50 text-slate-500">
-                    <tr class="divide-x divide-gray-200">
-                      <!-- CHECKBOX ALL -->
-                      <th class="px-3 py-2 w-10 text-center">
-                        <input
-                          type="checkbox"
-                          :checked="
-                            selectedIds.length === products.length &&
-                            products.length > 0
-                          "
-                          @change="
-                            selectedIds = $event.target.checked
-                              ? products.map((p) => p.id)
-                              : []
-                          "
-                        />
-                      </th>
-
-                      <th class="px-3 py-2 text-left">SKU</th>
-                      <th class="px-3 py-2 text-left">Produk</th>
-
-                      <!-- NEW STOCK COLUMN -->
-                      <th class="px-3 py-2 text-center">Stok</th>
-
-                      <th class="px-3 py-2 text-right">Harga Konsumen</th>
-                      <th class="px-3 py-2 text-right">Harga Grosir</th>
-                      <th class="px-3 py-2 text-center">Aksi</th>
-                    </tr>
-                  </thead>
-
-                  <!-- BODY -->
-                  <tbody class="divide-y divide-gray-200">
-                    <!-- LOADING -->
-                    <template v-if="loadingProducts">
-                      <tr
-                        v-for="i in 8"
-                        :key="'skeleton-' + i"
-                        class="animate-pulse divide-x divide-gray-200"
-                      >
-                        <!-- CHECKBOX -->
-                        <td class="px-3 py-2 text-center">
-                          <div
-                            class="h-4 w-4 bg-gray-200 rounded mx-auto"
-                          ></div>
-                        </td>
-
-                        <!-- SKU -->
-                        <td class="px-3 py-2">
-                          <div class="h-4 w-20 bg-gray-200 rounded"></div>
-                        </td>
-
-                        <!-- PRODUCT -->
-                        <td class="px-3 py-2">
-                          <div class="h-4 w-40 bg-gray-200 rounded"></div>
-                        </td>
-
-                        <!-- STOCK -->
-                        <td class="px-3 py-2 text-center">
-                          <div
-                            class="h-4 w-10 bg-gray-200 rounded mx-auto"
-                          ></div>
-                        </td>
-
-                        <!-- RETAIL -->
-                        <td class="px-3 py-2">
-                          <div
-                            class="h-4 w-24 bg-gray-200 rounded ml-auto"
-                          ></div>
-                        </td>
-
-                        <!-- WHOLESALE -->
-                        <td class="px-3 py-2">
-                          <div
-                            class="h-4 w-24 bg-gray-200 rounded ml-auto"
-                          ></div>
-                        </td>
-
-                        <!-- ACTION -->
-                        <td class="px-3 py-2 text-center">
-                          <div
-                            class="h-6 w-12 bg-gray-200 rounded mx-auto"
-                          ></div>
-                        </td>
-                      </tr>
-                    </template>
-
-                    <!-- DATA -->
-                    <template v-else>
-                      <tr
-                        v-for="p in products"
-                        :key="p.id"
-                        @click="addToCart(p)"
-                        class="cursor-pointer transition divide-x divide-gray-200"
-                        :class="
-                          getCartItem(p.id) ? 'bg-blue-50' : 'hover:bg-gray-50'
-                        "
-                      >
-                        <!-- CHECKBOX -->
-                        <td class="px-3 py-2 text-center">
+              <!-- TABLE -->
+              <div class="flex-1 min-h-0 flex flex-col">
+                <div class="flex-1 min-h-0 overflow-auto rounded-xl">
+                  <table class="w-full text-sm border border-gray-200">
+                    <!-- HEADER -->
+                    <thead class="bg-gray-50 text-slate-500">
+                      <tr class="divide-x divide-gray-200">
+                        <!-- CHECKBOX ALL -->
+                        <th class="px-3 py-2 w-10 text-center">
                           <input
                             type="checkbox"
-                            :value="p.id"
-                            v-model="selectedIds"
-                            @click.stop
+                            :checked="
+                              selectedIds.length === products.length &&
+                              products.length > 0
+                            "
+                            @change="
+                              selectedIds = $event.target.checked
+                                ? products.map((p) => p.id)
+                                : []
+                            "
                           />
-                        </td>
+                        </th>
 
-                        <!-- SKU -->
-                        <td class="px-3 py-2 text-xs text-gray-400">
-                          {{ p.sku || "-" }}
-                        </td>
+                        <th class="px-3 py-2 text-left">SKU</th>
+                        <th class="px-3 py-2 text-left">Produk</th>
 
-                        <!-- NAME -->
-                        <td class="px-3 py-2">
-                          {{ p.name || p.productName }}
-                        </td>
+                        <!-- NEW STOCK COLUMN -->
+                        <th class="px-3 py-2 text-center">Stok</th>
 
-                        <!-- STOCK -->
-                        <td class="px-3 py-2 text-center">
-                          <div
-                            class="inline-flex items-center gap-2 px-2 py-0.5 rounded-md border border-gray-200 bg-white"
-                          >
-                            <span
-                              class="w-2 h-2 rounded-full"
-                              :class="
-                                (p.stock || 0) == 0
-                                  ? 'bg-red-600'
-                                  : p.stock <= (p.minimumStock || 5)
-                                    ? 'bg-yellow-500'
-                                    : 'bg-green-600'
-                              "
+                        <th class="px-3 py-2 text-right">Harga Konsumen</th>
+                        <th class="px-3 py-2 text-right">Harga Grosir</th>
+                        <th class="px-3 py-2 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+
+                    <!-- BODY -->
+                    <tbody class="divide-y divide-gray-200">
+                      <!-- LOADING -->
+                      <template v-if="loadingProducts">
+                        <tr
+                          v-for="i in 8"
+                          :key="'skeleton-' + i"
+                          class="animate-pulse divide-x divide-gray-200"
+                        >
+                          <!-- CHECKBOX -->
+                          <td class="px-3 py-2 text-center">
+                            <div
+                              class="h-4 w-4 bg-gray-200 rounded mx-auto"
+                            ></div>
+                          </td>
+
+                          <!-- SKU -->
+                          <td class="px-3 py-2">
+                            <div class="h-4 w-20 bg-gray-200 rounded"></div>
+                          </td>
+
+                          <!-- PRODUCT -->
+                          <td class="px-3 py-2">
+                            <div class="h-4 w-40 bg-gray-200 rounded"></div>
+                          </td>
+
+                          <!-- STOCK -->
+                          <td class="px-3 py-2 text-center">
+                            <div
+                              class="h-4 w-10 bg-gray-200 rounded mx-auto"
+                            ></div>
+                          </td>
+
+                          <!-- RETAIL -->
+                          <td class="px-3 py-2">
+                            <div
+                              class="h-4 w-24 bg-gray-200 rounded ml-auto"
+                            ></div>
+                          </td>
+
+                          <!-- WHOLESALE -->
+                          <td class="px-3 py-2">
+                            <div
+                              class="h-4 w-24 bg-gray-200 rounded ml-auto"
+                            ></div>
+                          </td>
+
+                          <!-- ACTION -->
+                          <td class="px-3 py-2 text-center">
+                            <div
+                              class="h-6 w-12 bg-gray-200 rounded mx-auto"
+                            ></div>
+                          </td>
+                        </tr>
+                      </template>
+
+                      <!-- DATA -->
+                      <template v-else>
+                        <tr
+                          v-for="p in products"
+                          :key="p.id"
+                          @click="addToCart(p)"
+                          class="cursor-pointer transition divide-x divide-gray-200"
+                          :class="
+                            getCartItem(p.id)
+                              ? 'bg-blue-50'
+                              : 'hover:bg-gray-50'
+                          "
+                        >
+                          <!-- CHECKBOX -->
+                          <td class="px-3 py-2 text-center">
+                            <input
+                              type="checkbox"
+                              :value="p.id"
+                              v-model="selectedIds"
+                              @click.stop
                             />
-                            <span
-                              class="text-xs font-medium"
-                              :class="
-                                (p.stock || 0) == 0
-                                  ? 'text-red-600'
-                                  : p.stock <= (p.minimumStock || 5)
-                                    ? 'text-yellow-600'
-                                    : 'text-gray-700'
-                              "
+                          </td>
+
+                          <!-- SKU -->
+                          <td class="px-3 py-2 text-xs text-gray-400">
+                            {{ p.sku || "-" }}
+                          </td>
+
+                          <!-- NAME -->
+                          <td class="px-3 py-2">
+                            {{ p.name || p.productName }}
+                          </td>
+
+                          <!-- STOCK -->
+                          <td class="px-3 py-2 text-center">
+                            <div
+                              class="inline-flex items-center gap-2 px-2 py-0.5 rounded-md border border-gray-200 bg-white"
                             >
-                              {{ p.stock || 0 }}
-                            </span>
-                          </div>
-                        </td>
+                              <span
+                                class="w-2 h-2 rounded-full"
+                                :class="
+                                  (p.stock || 0) == 0
+                                    ? 'bg-red-600'
+                                    : p.stock <= (p.minimumStock || 5)
+                                      ? 'bg-yellow-500'
+                                      : 'bg-green-600'
+                                "
+                              />
+                              <span
+                                class="text-xs font-medium"
+                                :class="
+                                  (p.stock || 0) == 0
+                                    ? 'text-red-600'
+                                    : p.stock <= (p.minimumStock || 5)
+                                      ? 'text-yellow-600'
+                                      : 'text-gray-700'
+                                "
+                              >
+                                {{ p.stock || 0 }}
+                              </span>
+                            </div>
+                          </td>
 
-                        <!-- RETAIL -->
-                        <td class="px-3 py-2 text-right font-medium">
-                          {{ formatCurrency(p.retailPrice || p.retail) }}
-                        </td>
+                          <!-- RETAIL -->
+                          <td class="px-3 py-2 text-right font-medium">
+                            {{ formatCurrency(p.retailPrice || p.retail) }}
+                          </td>
 
-                        <!-- WHOLESALE -->
-                        <td class="px-3 py-2 text-right text-gray-500">
-                          {{ formatCurrency(p.wholesalePrice || p.wholesale) }}
-                        </td>
+                          <!-- WHOLESALE -->
+                          <td class="px-3 py-2 text-right text-gray-500">
+                            {{
+                              formatCurrency(p.wholesalePrice || p.wholesale)
+                            }}
+                          </td>
 
-                        <!-- CART -->
-                        <!-- CART -->
-                        <td class="px-3 py-2 text-center">
-                          <div
-                            v-if="getCartItem(p.id)"
-                            class="flex items-center justify-center gap-1"
-                          >
-                            <!-- MINUS -->
+                          <!-- CART -->
+                          <td class="px-3 py-2 text-center">
+                            <div
+                              v-if="getCartItem(p.id)"
+                              class="flex items-center justify-center gap-1"
+                            >
+                              <!-- MINUS -->
+                              <button
+                                @click.stop="decreaseQty(p)"
+                                class="w-6 h-6 flex items-center justify-center border rounded-md hover:bg-gray-100"
+                              >
+                                -
+                              </button>
+
+                              <!-- QTY -->
+                              <span class="w-6 text-center text-xs font-medium">
+                                {{ getCartItem(p.id).qty }}
+                              </span>
+
+                              <!-- PLUS -->
+                              <button
+                                @click.stop="increaseQty(p)"
+                                class="w-6 h-6 flex items-center justify-center border rounded-md hover:bg-gray-100"
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            <!-- ADD BUTTON (kalau belum ada di cart) -->
                             <button
-                              @click.stop="decreaseQty(p)"
-                              class="w-6 h-6 flex items-center justify-center border rounded-md hover:bg-gray-100"
+                              v-else
+                              @click.stop="addToCart(p)"
+                              class="px-2 py-1 text-xs bg-blue-900 text-white rounded-md hover:bg-blue-800"
                             >
-                              -
+                              Add
                             </button>
-
-                            <!-- QTY -->
-                            <span class="w-6 text-center text-xs font-medium">
-                              {{ getCartItem(p.id).qty }}
-                            </span>
-
-                            <!-- PLUS -->
-                            <button
-                              @click.stop="increaseQty(p)"
-                              class="w-6 h-6 flex items-center justify-center border rounded-md hover:bg-gray-100"
-                            >
-                              +
-                            </button>
-                          </div>
-
-                          <!-- ADD BUTTON (kalau belum ada di cart) -->
-                          <button
-                            v-else
-                            @click.stop="addToCart(p)"
-                            class="px-2 py-1 text-xs bg-blue-900 text-white rounded-md hover:bg-blue-800"
+                          </td>
+                        </tr>
+                        <!-- EMPTY -->
+                        <tr v-if="!products.length">
+                          <td
+                            colspan="7"
+                            class="text-center py-6 text-gray-400"
                           >
-                            Add
-                          </button>
-                        </td>
-                      </tr>
-                      <!-- EMPTY -->
-                      <tr v-if="!products.length">
-                        <td colspan="7" class="text-center py-6 text-gray-400">
-                          Produk tidak ditemukan
-                        </td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-              <div class="flex justify-between items-center mt-3 text-sm">
-                <div>Page {{ currentPage }} / {{ pagination.totalPages }}</div>
+                            Produk tidak ditemukan
+                          </td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="flex justify-between items-center mt-3 text-sm">
+                  <div>
+                    Page {{ currentPage }} / {{ pagination.totalPages }}
+                  </div>
 
-                <div class="flex gap-2">
-                  <button
-                    :disabled="currentPage === 1"
-                    @click="changePage(currentPage - 1)"
-                    class="px-3 py-1 border rounded"
-                  >
-                    Prev
-                  </button>
+                  <div class="flex gap-2">
+                    <button
+                      :disabled="currentPage === 1"
+                      @click="changePage(currentPage - 1)"
+                      class="px-3 py-1 border rounded"
+                    >
+                      Prev
+                    </button>
 
-                  <button
-                    :disabled="currentPage === pagination.totalPages"
-                    @click="changePage(currentPage + 1)"
-                    class="px-3 py-1 border rounded"
-                  >
-                    Next
-                  </button>
+                    <button
+                      :disabled="currentPage === pagination.totalPages"
+                      @click="changePage(currentPage + 1)"
+                      class="px-3 py-1 border rounded"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <!-- RIGHT: CART (ONLY FULLSCREEN) -->
-        <div
-          v-if="isFullscreen"
-          class="w-[35%] bg-white border rounded-2xl p-4 flex flex-col"
-        >
-          <!-- HEADER -->
-          <div class="flex justify-between items-center mb-3">
-            <h3 class="font-semibold text-gray-800">Cart</h3>
-            <span class="text-sm text-gray-500"> {{ totalQty }} item </span>
-          </div>
+          <!-- RIGHT: CART (ONLY FULLSCREEN) -->
+          <div
+            v-if="isFullscreen"
+            class="w-[35%] bg-white border rounded-2xl p-4 flex flex-col"
+          >
+            <!-- HEADER -->
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-semibold text-gray-800">Cart</h3>
+              <span class="text-sm text-gray-500"> {{ totalQty }} item </span>
+            </div>
 
-          <!-- CART LIST -->
-          <div class="flex-1 overflow-auto space-y-2">
-            <div
-              v-for="item in cart"
-              :key="item.id"
-              class="flex justify-between items-center border rounded-lg p-2"
-            >
-              <div>
-                <p class="text-sm font-medium">{{ item.name }}</p>
-                <p class="text-xs text-gray-500">
-                  {{ formatCurrency(item.price) }}
-                </p>
+            <!-- CART LIST -->
+            <div class="flex-1 overflow-auto space-y-2">
+              <div
+                v-for="item in cart"
+                :key="item.id"
+                class="flex justify-between items-center border rounded-lg p-2"
+              >
+                <div>
+                  <p class="text-sm font-medium">{{ item.name }}</p>
+                  <p class="text-xs text-gray-500">
+                    {{ formatCurrency(item.price) }}
+                  </p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="decreaseQty(item)"
+                    class="w-6 h-6 border rounded"
+                  >
+                    -
+                  </button>
+
+                  <span class="text-sm w-5 text-center">
+                    {{ item.qty }}
+                  </span>
+
+                  <button
+                    @click="increaseQty(item)"
+                    class="w-6 h-6 border rounded"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
-              <div class="flex items-center gap-2">
-                <button
-                  @click="decreaseQty(item)"
-                  class="w-6 h-6 border rounded"
-                >
-                  -
-                </button>
+              <div
+                v-if="!cart.length"
+                class="text-center text-gray-400 text-sm py-6"
+              >
+                Cart kosong
+              </div>
+            </div>
 
-                <span class="text-sm w-5 text-center">
-                  {{ item.qty }}
+            <!-- SUMMARY -->
+            <div class="border-t pt-3 mt-3 space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span>Total</span>
+                <span class="font-semibold">
+                  {{ formatCurrency(totalAmount) }}
                 </span>
-
-                <button
-                  @click="increaseQty(item)"
-                  class="w-6 h-6 border rounded"
-                >
-                  +
-                </button>
               </div>
-            </div>
 
-            <div
-              v-if="!cart.length"
-              class="text-center text-gray-400 text-sm py-6"
-            >
-              Cart kosong
+              <!-- BAYAR -->
+              <button
+                @click="openPayment"
+                class="w-full bg-blue-900 text-white py-2 rounded-lg"
+              >
+                Bayar
+              </button>
             </div>
-          </div>
-
-          <!-- SUMMARY -->
-          <div class="border-t pt-3 mt-3 space-y-2 text-sm">
-            <div class="flex justify-between">
-              <span>Total</span>
-              <span class="font-semibold">
-                {{ formatCurrency(totalAmount) }}
-              </span>
-            </div>
-
-            <!-- BAYAR -->
-            <button
-              @click="openPayment"
-              class="w-full bg-blue-900 text-white py-2 rounded-lg"
-            >
-              Bayar
-            </button>
           </div>
         </div>
       </div>
-    </div>
-    <div v-else class="flex-1 overflow-auto p-2">
-      <!-- LOADING -->
-      <div v-if="loadingProducts" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div v-else class="flex-1 overflow-auto p-2">
+        <!-- LOADING -->
         <div
-          v-for="i in 8"
-          :key="i"
-          class="h-24 bg-gray-100 animate-pulse rounded-xl"
-        />
-      </div>
-
-      <!-- EMPTY -->
-      <div v-else-if="!products.length" class="text-center text-gray-400 py-10">
-        Produk tidak ditemukan
-      </div>
-
-      <!-- CARD -->
-      <div
-        v-else
-        class="grid gap-3"
-        :class="[
-          isFullscreen
-            ? 'grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-            : 'grid-cols-2',
-        ]"
-      >
-        <div
-          v-for="p in products"
-          :key="p.id"
-          @click="addToCart(p)"
-          class="border rounded-xl p-3 bg-white hover:shadow cursor-pointer"
+          v-if="loadingProducts"
+          class="grid grid-cols-2 md:grid-cols-4 gap-3"
         >
-          <p class="text-sm font-medium">
-            {{ p.name || p.productName }}
-          </p>
+          <div
+            v-for="i in 8"
+            :key="i"
+            class="h-24 bg-gray-100 animate-pulse rounded-xl"
+          />
+        </div>
 
-          <p class="text-blue-900 text-sm font-semibold">
-            {{ formatCurrency(getPrice(p)) }}
-          </p>
+        <!-- EMPTY -->
+        <div
+          v-else-if="!products.length"
+          class="text-center text-gray-400 py-10"
+        >
+          Produk tidak ditemukan
+        </div>
+
+        <!-- CARD -->
+        <div
+          v-else
+          class="grid gap-3"
+          :class="[
+            isFullscreen
+              ? 'grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+              : 'grid-cols-2',
+          ]"
+        >
+          <div
+            v-for="p in products"
+            :key="p.id"
+            @click="addToCart(p)"
+            class="border rounded-xl p-3 bg-white hover:shadow cursor-pointer"
+          >
+            <p class="text-sm font-medium">
+              {{ p.name || p.productName }}
+            </p>
+
+            <p class="text-blue-900 text-sm font-semibold">
+              {{ formatCurrency(getPrice(p)) }}
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 
   <!-- ================= MANUAL ================= -->
