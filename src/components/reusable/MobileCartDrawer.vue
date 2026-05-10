@@ -81,16 +81,13 @@ const updatePayment = (data) => {
 </script>
 <template>
   <transition name="mobile-cart">
-    <div
-      v-if="open"
-      class="fixed inset-0 z-[999] bg-black/40 backdrop-blur-[1px] flex items-end"
-    >
+    <div v-if="open" class="fixed inset-0 z-[999] bg-black/40 flex items-end">
       <!-- BACKDROP -->
       <div class="absolute inset-0" @click="emit('close')"></div>
 
       <!-- DRAWER -->
       <div
-        class="relative w-full bg-white rounded-t-[28px] h-[92vh] flex flex-col shadow-2xl"
+        class="mobile-sheet relative w-full bg-white rounded-t-[28px] h-[92vh] flex flex-col shadow-xl transform-gpu will-change-transform"
       >
         <!-- HANDLE -->
         <div class="flex justify-center pt-3 pb-2">
@@ -418,7 +415,7 @@ const updatePayment = (data) => {
 <style scoped>
 .mobile-cart-enter-active,
 .mobile-cart-leave-active {
-  transition: all 0.25s ease;
+  transition: opacity 0.18s ease;
 }
 
 .mobile-cart-enter-from,
@@ -426,21 +423,16 @@ const updatePayment = (data) => {
   opacity: 0;
 }
 
-.mobile-cart-enter-from .relative,
-.mobile-cart-leave-to .relative {
-  transform: translateY(100%);
+.mobile-cart-enter-active .mobile-sheet,
+.mobile-cart-leave-active .mobile-sheet {
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.22s ease;
+  will-change: transform;
 }
 
-.mobile-cart-enter-active .relative,
-.mobile-cart-leave-active .relative {
-  transition: transform 0.25s ease;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.overscroll-contain {
-  overscroll-behavior: contain;
+.mobile-cart-enter-from .mobile-sheet,
+.mobile-cart-leave-to .mobile-sheet {
+  transform: translate3d(0, 100%, 0);
 }
 </style>
