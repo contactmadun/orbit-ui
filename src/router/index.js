@@ -50,6 +50,7 @@ import StockDetail from "@/components/ProductStockDetail.vue";
 import AccountBank from "@/components/AccountFinance.vue";
 import AccountMutation from "@/components/AccountMutationPage.vue";
 import Integration from "@/components/IntegrationPage.vue";
+import ReceiptPage from "@/components/ReceiptView.vue";
 
 const routes = [
   {
@@ -269,6 +270,12 @@ const routes = [
     path: "/setting",
     name: "setting",
     component: Setting,
+  },
+
+  //Receipt
+  {
+    path: "/pos/receipt/:id",
+    component: ReceiptPage,
   },
 
   //Outlet Page
