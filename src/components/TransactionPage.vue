@@ -250,9 +250,9 @@ const handlePay = async () => {
 
     console.log("SEND API:", payload);
 
-    await api.post("/sale", payload);
-
-    alert("Transaksi berhasil");
+    const res = await api.post("/sale", payload);
+    const saleId = res.data.data.id;
+    router.push(`/pos/receipt/${saleId}`);
 
     // 🔥 RESET STATE
     cart.value = [];
@@ -473,13 +473,6 @@ const handleMobileScroll = async () => {
   const fullHeight = document.documentElement.scrollHeight;
 
   const nearBottom = scrollTop + windowHeight >= fullHeight - 200;
-
-  console.log("SCROLL", {
-    scrollTop,
-    windowHeight,
-    fullHeight,
-    nearBottom,
-  });
 
   if (
     nearBottom &&
