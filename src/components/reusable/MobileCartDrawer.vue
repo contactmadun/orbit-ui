@@ -2,6 +2,13 @@
 import { computed, ref, watch, onBeforeUnmount } from "vue";
 import { X, Minus, Plus, ShoppingBag, Wallet } from "lucide-vue-next";
 import { formatCurrency, handleCurrencyInput } from "@/helpers/numberFormatter";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const showCustomer = ref(false);
 const showDiscount = ref(false);
@@ -88,7 +95,7 @@ const updatePayment = (data) => {
 
       <!-- DRAWER -->
       <div
-        class="mobile-sheet relative w-full bg-white rounded-t-[28px] h-[92vh] flex flex-col shadow-xl transform-gpu will-change-transform"
+        class="mobile-sheet relative w-full bg-white rounded-t-[28px] h-[92vh] flex flex-col shadow-xl"
       >
         <!-- HANDLE -->
         <div class="flex justify-center pt-3 pb-2">
@@ -254,23 +261,26 @@ const updatePayment = (data) => {
               </div>
 
               <!-- FUND SOURCE -->
-              <div v-if="isInject">
-                <label class="text-sm font-medium text-slate-700 block mb-2">
-                  Sumber Dana Inject
-                </label>
+              <Select
+                :model-value="payment.fundSource"
+                @update:model-value="
+                  (value) => updatePayment({ fundSource: value })
+                "
+              >
+                <SelectTrigger class="w-full h-12 rounded-2xl">
+                  <SelectValue placeholder="Pilih sumber dana" />
+                </SelectTrigger>
 
-                <select
-                  class="w-full h-12 rounded-2xl border px-4 text-sm bg-white"
-                  :value="payment.fundSource"
-                  @change="updatePayment({ fundSource: $event.target.value })"
-                >
-                  <option value="">Pilih sumber dana</option>
-
-                  <option v-for="f in injectFunds" :key="f.id" :value="f.id">
+                <SelectContent position="popper" side="top" class="z-[9999]">
+                  <SelectItem
+                    v-for="f in injectFunds"
+                    :key="f.id"
+                    :value="String(f.id)"
+                  >
                     {{ f.nameBank || f.nameAccount || f.type }}
-                  </option>
-                </select>
-              </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
 
               <!-- CUSTOMER -->
               <div v-if="payment.status === 'unpaid'">
