@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, onMounted } from "vue";
+import * as htmlToImage from "html-to-image";
 import { useRouter, useRoute } from "vue-router";
 import {
   Printer,
@@ -13,10 +14,10 @@ import api from "@/axios";
 
 const router = useRouter();
 const route = useRoute();
-
+const receiptRef = ref(null);
 const loading = ref(true);
 const receipt = ref(null);
-
+const sharing = ref(false);
 const saleId = route.params.id;
 
 const fetchReceipt = async () => {
@@ -78,18 +79,53 @@ const handleNewTransaction = () => {
 };
 
 const handleShare = async () => {
+  sharing.value = true;
+
   try {
-    if (navigator.share) {
+    if (!receiptRef.value) return;
+
+    const dataUrl = await htmlToImage.toPng(receiptRef.value, {
+      pixelRatio: 2,
+      backgroundColor: "#ffffff",
+    });
+
+    // convert base64 -> file
+    const res = await fetch(dataUrl);
+
+    const blob = await res.blob();
+
+    const file = new File([blob], `receipt-${receipt.value?.trxId}.png`, {
+      type: "image/png",
+    });
+
+    // share image
+    if (
+      navigator.canShare &&
+      navigator.canShare({
+        files: [file],
+      })
+    ) {
       await navigator.share({
+        files: [file],
         title: "Struk Pembayaran",
         text: `Struk ${receipt.value?.trxId}`,
-        url: window.location.href,
       });
     } else {
-      alert("Browser tidak mendukung fitur share");
+      // fallback download
+      const link = document.createElement("a");
+
+      link.href = dataUrl;
+
+      link.download = `receipt-${receipt.value?.trxId}.png`;
+
+      link.click();
     }
   } catch (err) {
     console.error(err);
+
+    alert("Gagal membagikan struk");
+  } finally {
+    sharing.value = false;
   }
 };
 </script>
@@ -152,6 +188,7 @@ const handleShare = async () => {
 
         <!-- RECEIPT -->
         <div
+          ref="receiptRef"
           class="bg-white rounded-[28px] shadow-sm border overflow-hidden print:shadow-none print:border-none"
         >
           <!-- STORE -->
@@ -317,10 +354,12 @@ const handleShare = async () => {
 
           <!-- SHARE -->
           <button
+            :disabled="sharing"
             @click="handleShare"
             class="w-full h-14 rounded-2xl bg-emerald-600 text-white font-semibold text-lg flex items-center justify-center gap-3 active:scale-[0.98] transition"
           >
-            <Share2 class="w-5 h-5" />
+            <Loader2 v-if="sharing" class="w-5 h-5 animate-spin" />
+            <Share2 v-else class="w-5 h-5" />
             Share
           </button>
 
