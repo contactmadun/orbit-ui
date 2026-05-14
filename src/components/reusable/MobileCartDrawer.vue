@@ -261,26 +261,36 @@ const updatePayment = (data) => {
               </div>
 
               <!-- FUND SOURCE -->
-              <Select
-                :model-value="payment.fundSource"
-                @update:model-value="
-                  (value) => updatePayment({ fundSource: value })
-                "
-              >
-                <SelectTrigger class="w-full h-12 rounded-2xl">
-                  <SelectValue placeholder="Pilih sumber dana" />
-                </SelectTrigger>
+              <div v-if="isInject">
+                <label class="text-sm font-medium text-slate-700 block mb-2">
+                  Sumber Dana Inject
+                </label>
 
-                <SelectContent position="popper" side="top" class="z-[9999]">
-                  <SelectItem
-                    v-for="f in injectFunds"
-                    :key="f.id"
-                    :value="String(f.id)"
+                <Select
+                  :model-value="payment.fundSource"
+                  @update:model-value="
+                    (value) => updatePayment({ fundSource: value })
+                  "
+                >
+                  <SelectTrigger class="w-full h-12 px-4 py-6 rounded-2xl">
+                    <SelectValue placeholder="Pilih sumber dana" />
+                  </SelectTrigger>
+
+                  <SelectContent
+                    position="popper"
+                    side="bottom"
+                    class="z-[9999]"
                   >
-                    {{ f.nameBank || f.nameAccount || f.type }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                    <SelectItem
+                      v-for="f in injectFunds"
+                      :key="f.id"
+                      :value="String(f.id)"
+                    >
+                      {{ f.nameBank || f.nameAccount || f.type }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               <!-- CUSTOMER -->
               <div v-if="payment.status === 'unpaid'">
