@@ -998,7 +998,9 @@ onMounted(() => {
                           <!-- WHOLESALE -->
                           <td class="px-3 py-2 text-right text-gray-500">
                             {{
-                              formatCurrency(p.wholesalePrice || p.wholesale)
+                              formatCurrency(
+                                p.wholesalePrice || p.wholesale || 0,
+                              )
                             }}
                           </td>
 
@@ -1421,19 +1423,29 @@ onMounted(() => {
             Sumber Dana Modal
           </label>
 
-          <select
-            v-model="manual.fundSource"
+          <Select
+            :model-value="manual.fundSource"
+            @update:model-value="(value) => (manual.fundSource = value)"
             :disabled="manual.status === 'unpaid' || !manual.cost"
-            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm disabled:bg-gray-100"
           >
-            <option value="">
-              {{ loadingFunds ? "Loading..." : "Pilih sumber dana (opsional)" }}
-            </option>
+            <SelectTrigger class="mt-1 w-full h-11 rounded-lg">
+              <SelectValue
+                :placeholder="
+                  loadingFunds ? 'Loading...' : 'Pilih sumber dana (opsional)'
+                "
+              />
+            </SelectTrigger>
 
-            <option v-for="f in FundExcludeCash" :key="f.id" :value="f.id">
-              {{ f.nameBank }}
-            </option>
-          </select>
+            <SelectContent position="popper" class="z-[9999]">
+              <SelectItem
+                v-for="f in FundExcludeCash"
+                :key="f.id"
+                :value="String(f.id)"
+              >
+                {{ f.nameBank }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
 
           <!-- UX NOTE -->
           <p class="text-xs text-gray-400 mt-1">
@@ -1535,19 +1547,27 @@ onMounted(() => {
         <div>
           <label class="text-sm font-medium"> Sumber Dana (Debit) </label>
 
-          <select
-            v-model="transfer.fundSource"
+          <Select
+            :model-value="transfer.fundSource"
+            @update:model-value="(value) => (transfer.fundSource = value)"
             :disabled="transfer.status === 'unpaid'"
-            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
           >
-            <option value="">
-              {{ loadingFunds ? "Loading..." : "Pilih sumber dana" }}
-            </option>
+            <SelectTrigger class="mt-1 w-full h-11 rounded-lg">
+              <SelectValue
+                :placeholder="loadingFunds ? 'Loading...' : 'Pilih sumber dana'"
+              />
+            </SelectTrigger>
 
-            <option v-for="f in FundExcludeCash" :key="f.id" :value="f.id">
-              {{ f.nameBank }}
-            </option>
-          </select>
+            <SelectContent position="popper" class="z-[9999]">
+              <SelectItem
+                v-for="f in FundExcludeCash"
+                :key="f.id"
+                :value="String(f.id)"
+              >
+                {{ f.nameBank }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <!-- STATUS -->
@@ -1697,18 +1717,26 @@ onMounted(() => {
         <div>
           <label class="text-sm font-medium"> Dana Masuk ke </label>
 
-          <select
-            v-model="withdraw.fundTarget"
-            class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+          <Select
+            :model-value="withdraw.fundTarget"
+            @update:model-value="(value) => (withdraw.fundTarget = value)"
           >
-            <option value="">
-              {{ loadingFunds ? "Loading..." : "Pilih akun tujuan" }}
-            </option>
+            <SelectTrigger class="mt-1 w-full h-11 rounded-lg">
+              <SelectValue
+                :placeholder="loadingFunds ? 'Loading...' : 'Pilih akun tujuan'"
+              />
+            </SelectTrigger>
 
-            <option v-for="f in FundExcludeCash" :key="f.id" :value="f.id">
-              {{ f.nameBank }}
-            </option>
-          </select>
+            <SelectContent position="popper" class="z-[9999]">
+              <SelectItem
+                v-for="f in FundExcludeCash"
+                :key="f.id"
+                :value="String(f.id)"
+              >
+                {{ f.nameBank }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <!-- NOTES -->

@@ -14,6 +14,13 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, Trash2 } from "lucide-vue-next";
 import { formatCurrency, handleCurrencyInput } from "@/helpers/numberFormatter";
@@ -374,16 +381,26 @@ watch(
         <!-- PAYMENT METHOD -->
         <div v-if="props.payment?.status === 'paid'">
           <p class="text-xs text-gray-500 mb-1">Metode Pembayaran</p>
-          <select
-            class="w-full border rounded-lg px-3 py-2 text-sm capitalize"
-            :value="props.payment.method"
-            @change="updatePayment({ method: $event.target.value })"
+
+          <Select
+            :model-value="props.payment.method"
+            @update:model-value="(value) => updatePayment({ method: value })"
           >
-            <option value="">Pilih metode</option>
-            <option v-for="type in paymentMethods" :key="type" :value="type">
-              {{ type }}
-            </option>
-          </select>
+            <SelectTrigger class="w-full h-11 rounded-lg capitalize">
+              <SelectValue placeholder="Pilih metode" />
+            </SelectTrigger>
+
+            <SelectContent position="popper" class="z-[9999]">
+              <SelectItem
+                v-for="type in paymentMethods"
+                :key="type"
+                :value="type"
+                class="capitalize"
+              >
+                {{ type }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <!-- CUSTOMER NAME (IF UNPAID) -->
@@ -406,19 +423,28 @@ watch(
         <!-- FUND SOURCE (ONLY INJECT) -->
         <div v-if="props.isInject">
           <p class="text-xs text-gray-500 mb-1">Sumber Dana Inject</p>
-          <select
-            class="w-full border rounded-lg px-3 py-2 text-sm"
-            :value="props.payment?.fundSource"
-            @change="updatePayment({ fundSource: $event.target.value })"
+
+          <Select
+            :model-value="props.payment?.fundSource"
+            @update:model-value="
+              (value) => updatePayment({ fundSource: value })
+            "
           >
-            <option value="">Pilih sumber dana</option>
+            <SelectTrigger class="w-full h-11 rounded-lg">
+              <SelectValue placeholder="Pilih sumber dana" />
+            </SelectTrigger>
 
-            <option v-for="f in injectFunds" :key="f.id" :value="f.id">
-              {{ f.nameBank || f.nameAccount || f.type }}
-            </option>
-          </select>
+            <SelectContent position="popper" class="z-[9999]">
+              <SelectItem
+                v-for="f in injectFunds"
+                :key="f.id"
+                :value="String(f.id)"
+              >
+                {{ f.nameBank || f.nameAccount || f.type }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-
         <div class="flex gap-2">
           <!-- PELANGGAN -->
           <button
