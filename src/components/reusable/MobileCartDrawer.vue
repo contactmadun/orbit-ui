@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch, onBeforeUnmount } from "vue";
 import { X, Minus, Plus, ShoppingBag, Wallet } from "lucide-vue-next";
+import { formatCurrency, handleCurrencyInput } from "@/helpers/numberFormatter";
 
 const showCustomer = ref(false);
 const showDiscount = ref(false);
@@ -297,13 +298,16 @@ const updatePayment = (data) => {
                 </label>
 
                 <input
-                  :value="payment.amountPaid"
+                  :value="formatCurrency(payment.amountPaid)"
                   @input="
-                    updatePayment({
-                      amountPaid: Number($event.target.value) || 0,
+                    handleCurrencyInput($event, (value) => {
+                      updatePayment({
+                        amountPaid: value,
+                      });
                     })
                   "
-                  type="number"
+                  type="text"
+                  inputmode="numeric"
                   placeholder="Masukkan nominal"
                   class="w-full h-12 rounded-2xl border px-4 text-sm"
                 />

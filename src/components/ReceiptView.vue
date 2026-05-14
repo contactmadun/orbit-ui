@@ -132,7 +132,7 @@ const handleShare = async () => {
 
     <!-- CONTENT -->
     <template v-else-if="receipt">
-      <div class="max-w-md mx-auto px-4 py-5 pb-40">
+      <div class="max-w-md mx-auto px-4 py-5 pb-40 mb-20">
         <!-- SUCCESS -->
         <div class="flex flex-col items-center mb-5 print:hidden">
           <div
