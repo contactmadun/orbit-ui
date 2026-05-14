@@ -23,6 +23,7 @@ import MobileCartDrawer from "@/components/reusable/MobileCartDrawer.vue";
 import CloseCashierDrawer from "@/components/reusable/CloseCashierDrawer.vue";
 import { useRouter } from "vue-router";
 import { useFullscreen } from "@/composable/useFullscreen";
+import { formatCurrency, handleCurrencyInput } from "@/helpers/numberFormatter";
 
 /* ========================= STATE ========================= */
 let debounceTimer = null;
@@ -600,12 +601,12 @@ const changePage = (page) => {
   fetchProducts();
 };
 
-const formatCurrency = (val) =>
-  new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(val || 0);
+// const formatCurrency = (val) =>
+//   new Intl.NumberFormat("id-ID", {
+//     style: "currency",
+//     currency: "IDR",
+//     minimumFractionDigits: 0,
+//   }).format(val || 0);
 
 /* ========================= KEYBOARD ========================= */
 const handleKeydown = (e) => {
@@ -1322,8 +1323,14 @@ onMounted(() => {
             Harga Jual <span class="text-red-500">*</span>
           </label>
           <input
-            v-model.number="manual.price"
-            type="number"
+            :value="formatCurrency(manual.price)"
+            @input="
+              handleCurrencyInput($event, (value) => {
+                manual.price = value;
+              })
+            "
+            type="text"
+            inputmode="numeric"
             placeholder="Masukkan harga jual"
             class="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
           />
@@ -1333,8 +1340,14 @@ onMounted(() => {
         <div>
           <label class="text-sm font-medium text-gray-700"> Harga Modal </label>
           <input
-            v-model.number="manual.cost"
-            type="number"
+            :value="formatCurrency(manual.cost)"
+            @input="
+              handleCurrencyInput($event, (value) => {
+                manual.cost = value;
+              })
+            "
+            type="text"
+            inputmode="numeric"
             placeholder="Opsional"
             class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
           />
@@ -1471,8 +1484,14 @@ onMounted(() => {
         <div>
           <label class="text-sm font-medium">Nominal Transfer *</label>
           <input
-            v-model.number="transfer.amount"
-            type="number"
+            :value="formatCurrency(transfer.amount)"
+            @input="
+              handleCurrencyInput($event, (value) => {
+                transfer.amount = value;
+              })
+            "
+            type="text"
+            inputmode="numeric"
             class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
             placeholder="Masukkan nominal"
           />
@@ -1482,8 +1501,14 @@ onMounted(() => {
         <div>
           <label class="text-sm font-medium">Admin Bank</label>
           <input
-            v-model.number="transfer.adminBank"
-            type="number"
+            :value="formatCurrency(transfer.adminBank)"
+            @input="
+              handleCurrencyInput($event, (value) => {
+                transfer.adminBank = value;
+              })
+            "
+            type="text"
+            inputmode="numeric"
             class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
             placeholder="Biaya dari bank"
           />
@@ -1493,8 +1518,14 @@ onMounted(() => {
         <div>
           <label class="text-sm font-medium"> Admin Konsumen (Profit) </label>
           <input
-            v-model.number="transfer.adminCustomer"
-            type="number"
+            :value="formatCurrency(transfer.adminCustomer)"
+            @input="
+              handleCurrencyInput($event, (value) => {
+                transfer.adminCustomer = value;
+              })
+            "
+            type="text"
+            inputmode="numeric"
             class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
             placeholder="Keuntungan"
           />
@@ -1615,8 +1646,14 @@ onMounted(() => {
         <div>
           <label class="text-sm font-medium"> Nominal Penarikan * </label>
           <input
-            v-model.number="withdraw.amount"
-            type="number"
+            :value="formatCurrency(withdraw.amount)"
+            @input="
+              handleCurrencyInput($event, (value) => {
+                withdraw.amount = value;
+              })
+            "
+            type="text"
+            inputmode="numeric"
             class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
             placeholder="Masukkan nominal"
           />
@@ -1626,8 +1663,14 @@ onMounted(() => {
         <div>
           <label class="text-sm font-medium"> Admin (Keuntungan) </label>
           <input
-            v-model.number="withdraw.admin"
-            type="number"
+            :value="formatCurrency(withdraw.admin)"
+            @input="
+              handleCurrencyInput($event, (value) => {
+                withdraw.admin = value;
+              })
+            "
+            type="text"
+            inputmode="numeric"
             class="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
             placeholder="Opsional"
           />

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, Trash2 } from "lucide-vue-next";
+import { formatCurrency, handleCurrencyInput } from "@/helpers/numberFormatter";
 
 /* props */
 const props = defineProps({
@@ -229,12 +230,12 @@ const injectFunds = computed(() =>
   ),
 );
 
-const formatCurrency = (val) =>
-  new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(val || 0);
+// const formatCurrency = (val) =>
+//   new Intl.NumberFormat("id-ID", {
+//     style: "currency",
+//     currency: "IDR",
+//     minimumFractionDigits: 0,
+//   }).format(val || 0);
 
 /* methods */
 const updatePayment = (newData = {}) => {
@@ -539,13 +540,16 @@ watch(
         <!-- INPUT CASH -->
         <div v-if="props.payment?.status === 'paid'">
           <input
-            :value="props.payment?.amountPaid ?? ''"
+            :value="formatCurrency(props.payment?.amountPaid) ?? ''"
             @input="
-              updatePayment({
-                amountPaid: Number($event.target.value) || 0,
+              handleCurrencyInput($event, (value) => {
+                updatePayment({
+                  amountPaid: value,
+                });
               })
             "
-            type="number"
+            type="text"
+            inputmode="numeric"
             class="w-full border rounded-lg px-3 py-2"
           />
         </div>
