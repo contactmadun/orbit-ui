@@ -189,7 +189,7 @@ const handleShare = async () => {
         <!-- RECEIPT -->
         <div
           ref="receiptRef"
-          class="bg-white rounded-[28px] shadow-sm border overflow-hidden print:shadow-none print:border-none"
+          class="bg-white rounded-xl shadow-sm border overflow-hidden print:shadow-none print:border-none"
         >
           <!-- STORE -->
           <div class="px-6 pt-7 pb-5 text-center border-b border-dashed">
@@ -198,12 +198,15 @@ const handleShare = async () => {
             </h2>
 
             <p class="mt-3 text-sm text-slate-500 leading-6">
-              {{ receipt?.outlet?.outletName || "-" }}
+              {{
+                receipt?.outlet?.outletName ||
+                "Jl Nasional 05 No.480A Tanjungsari Sumedang Nomor Telepon 087770999062"
+              }}
             </p>
           </div>
 
           <!-- INFO -->
-          <div class="px-6 py-5 border-b border-dashed space-y-3 text-sm">
+          <div class="px-6 py-5 border-b border-dashed space-y-1 text-sm">
             <div class="flex items-start justify-between gap-4">
               <span class="text-slate-500">No. Transaksi</span>
 
@@ -223,23 +226,8 @@ const handleShare = async () => {
             <div class="flex items-center justify-between gap-4">
               <span class="text-slate-500">Status</span>
 
-              <span
-                class="capitalize px-2 py-1 rounded-lg text-xs font-semibold"
-                :class="
-                  receipt.status === 'paid'
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-orange-100 text-orange-700'
-                "
-              >
+              <span class="capitalize py-1">
                 {{ receipt.status === "paid" ? "Lunas" : "Belum Lunas" }}
-              </span>
-            </div>
-
-            <div class="flex items-center justify-between gap-4">
-              <span class="text-slate-500">Metode</span>
-
-              <span class="capitalize text-slate-800">
-                {{ paymentMethod }}
               </span>
             </div>
 
@@ -297,20 +285,20 @@ const handleShare = async () => {
           </div>
 
           <!-- TOTAL -->
-          <div class="px-6 py-5 border-t border-dashed space-y-3">
+          <div class="px-6 py-5 border-t border-dashed">
             <div class="flex items-center justify-between">
-              <span class="text-slate-500"> {{ totalQty }} item </span>
+              <span class="text-slate-800 font-semibold">Total</span>
 
-              <span class="text-3xl font-bold text-blue-700">
+              <span class="font-bold text-slate-800">
                 {{ formatCurrency(receipt.totalAmount) }}
               </span>
             </div>
 
-            <div class="space-y-2 pt-1">
+            <div>
               <div class="flex items-center justify-between">
                 <span class="text-slate-500">Bayar</span>
 
-                <span class="text-lg text-slate-800">
+                <span class="text-slate-800">
                   {{ formatCurrency(receipt.amountPaid) }}
                 </span>
               </div>
@@ -318,7 +306,7 @@ const handleShare = async () => {
               <div class="flex items-center justify-between">
                 <span class="text-slate-500">Kembalian</span>
 
-                <span class="text-xl font-bold text-emerald-600">
+                <span class="text-slate-800">
                   {{ formatCurrency(receipt.changeAmount) }}
                 </span>
               </div>
@@ -331,8 +319,12 @@ const handleShare = async () => {
               Terima kasih 🙌
             </h3>
 
-            <p class="text-slate-500 mt-4 leading-7 max-w-[260px] mx-auto">
-              Barang yang sudah dibeli tidak dapat ditukar/dikembalikan
+            <p
+              class="text-slate-500 text-xs mt-4 leading-5 max-w-[280px] mx-auto"
+            >
+              Jika mengalami kendala saat transaksi silahkan hubungi Customer
+              Service. Barang yang sudah dibeli tidak dapat
+              ditukar/dikembalikan.
             </p>
           </div>
         </div>
