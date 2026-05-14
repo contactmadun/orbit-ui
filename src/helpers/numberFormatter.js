@@ -1,23 +1,25 @@
-// helpers/currencyFormatter.js
+// helpers/numberFormatter.js
+
 export function formatCurrency(value) {
-  if (!value) return ""
+  if (value === null || value === undefined || value === "") return ""
+
   return new Intl.NumberFormat("id-ID").format(
-    value.toString().replace(/\D/g, "")
+    Number(value.toString().replace(/\D/g, ""))
   )
 }
 
 export function parseCurrency(value) {
   if (!value) return 0
-  return parseInt(value.toString().replace(/\./g, ""), 10) || 0
+
+  return Number(value.toString().replace(/\D/g, ""))
 }
 
 /**
- * Handler reusable untuk input
- * @param {Event} e
- * @param {Ref} modelRef
+ * Reusable handler
  */
-export function handleCurrencyInput(e, modelRef) {
-  const raw = e.target.value
+export function handleCurrencyInput(event, callback) {
+  const raw = event.target.value
   const parsed = parseCurrency(raw)
-  modelRef.value = formatCurrency(parsed)
+
+  callback(parsed)
 }
