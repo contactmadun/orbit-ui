@@ -312,7 +312,7 @@ onMounted(() => {
           >
             <Wallet class="w-4 h-4" />
           </div>
-          <p class="text-base font-semibold text-slate-800">Total Revenue</p>
+          <p class="text-base font-semibold text-slate-800">Total Penjualan</p>
         </div>
 
         <div class="flex items-center justify-between mb-2">

@@ -416,7 +416,7 @@ watchEffect(() => {
             >
               <Users class="w-4 h-4" />
             </div>
-            <p class="text-base font-semibold text-slate-800">Total Product</p>
+            <p class="text-base font-semibold text-slate-800">Total Produk</p>
           </div>
 
           <div v-if="loadingStats">
@@ -444,7 +444,7 @@ watchEffect(() => {
               <UserRoundCheckIcon class="w-4 h-4" />
             </div>
             <p class="text-base font-semibold text-slate-800">
-              Total Transaction
+              Total Transaksi
             </p>
           </div>
 
@@ -473,7 +473,7 @@ watchEffect(() => {
               <UserRoundX class="w-4 h-4" />
             </div>
             <p class="text-base font-semibold text-slate-800">
-              Category Product
+              Kategori Produk
             </p>
           </div>
 

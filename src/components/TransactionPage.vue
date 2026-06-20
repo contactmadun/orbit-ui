@@ -693,7 +693,7 @@ onMounted(() => {
   <div class="mb-4">
     <div class="flex items-end justify-between">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-800">Transactions</h1>
+        <h1 class="text-2xl font-semibold text-slate-800">Transaksi</h1>
         <p class="text-slate-500 text-sm">
           Lakukan pencatatan transaksi di sini
         </p>
