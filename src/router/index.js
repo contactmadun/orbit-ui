@@ -51,6 +51,7 @@ import AccountBank from "@/components/AccountFinance.vue";
 import AccountMutation from "@/components/AccountMutationPage.vue";
 import Integration from "@/components/IntegrationPage.vue";
 import ReceiptPage from "@/components/ReceiptView.vue";
+import MemberPage from "@/components/MemberPage.vue";
 
 const routes = [
   {
@@ -135,6 +136,11 @@ const routes = [
     path: "/finance",
     name: "finance",
     component: Finance,
+  },
+  {
+    path: "/member",
+    name: "member",
+    component: MemberPage,
   },
   {
     path: "/stocks-opname",

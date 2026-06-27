@@ -189,6 +189,7 @@ const handleAfterPay = (data) => {
     method: "",
     status: "paid",
     customerName: "",
+    customerPhone: "",
     fundSource: "",
   };
 
@@ -239,7 +240,9 @@ const handlePay = async () => {
       status: payment.value.status,
       method: payment.value.method || null,
       amountPaid: Number(payment.value.amountPaid) || 0,
+      memberId: payment.value.memberId || 0,
       customerName: payment.value.customerName || null,
+      customerPhone: payment.value.customerPhone || null,
       fundSource: payment.value.fundSource || null,
     },
 
@@ -262,6 +265,7 @@ const handlePay = async () => {
       method: "",
       status: "paid",
       customerName: "",
+      customerPhone: "",
       fundSource: "",
     };
 
@@ -401,9 +405,11 @@ const decreaseQty = (p) => {
 
 const payment = ref({
   amountPaid: 0,
+  memberId: 0,
   method: "cash",
   status: "paid", // 🔥 default
   customerName: "",
+  customerPhone: "",
   fundSource: "",
 });
 

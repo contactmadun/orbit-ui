@@ -42,7 +42,9 @@ const props = defineProps({
       amountPaid: 0,
       method: "",
       status: "paid",
+      memberId: 0,
       customerName: "",
+      customerPhone: "",
       fundSource: "",
     }),
   },
@@ -58,7 +60,21 @@ const loadingFunds = ref(false);
 const loading = ref(false);
 const showCustomer = ref(false);
 const showDiscount = ref(false);
-const customers = ref([]);
+const members = ref([]);
+const memberSearch = ref("");
+const loadingMembers = ref(false);
+
+const selectCustomer = (member) => {
+  selectedCustomer.value = member;
+
+  updatePayment({
+    memberId: member?.id || 0,
+    customerName: member?.name || "",
+    customerPhone: member?.phone || "",
+  });
+
+  openCustomer.value = false;
+};
 
 const discount = ref({
   type: "nominal", // atau percent
@@ -101,9 +117,11 @@ const handleClearCart = () => {
   // 🔥 reset payment ke default
   emit("update:payment", {
     amountPaid: 0,
+    memberId: 0,
     method: "",
     status: "paid",
     customerName: "",
+    customerPhone: "",
     fundSource: "",
   });
 
@@ -167,7 +185,9 @@ const handlePay = async () => {
       status: props.payment.status,
       method: props.payment.method || null,
       amountPaid: Number(props.payment.amountPaid) || 0,
+      memberId: props.payment.memberId || 0,
       customerName: props.payment.customerName || null,
+      customerPhone: props.payment.customerPhone || null,
       fundSource: props.payment.fundSource || null,
     },
 
@@ -210,12 +230,21 @@ const fetchFunds = async () => {
   }
 };
 
-const fetchCustomers = async () => {
+const fetchMembers = async (keyword = "") => {
   try {
-    const res = await api.get("/customer");
-    customers.value = res.data.data;
+    loadingMembers.value = true;
+
+    const res = await api.get("/member/pos", {
+      params: {
+        search: keyword,
+      },
+    });
+
+    members.value = res.data.data;
   } catch (err) {
     console.error(err);
+  } finally {
+    loadingMembers.value = false;
   }
 };
 
@@ -268,8 +297,19 @@ const finalTotal = computed(() => {
 
 onMounted(() => {
   fetchFunds();
-  fetchCustomers();
 });
+
+let searchTimeout;
+
+const onSearch = (value) => {
+  memberSearch.value = value;
+
+  clearTimeout(searchTimeout);
+
+  searchTimeout = setTimeout(() => {
+    fetchMembers(value);
+  }, 300);
+};
 
 watch(
   () => props.payment?.customerName,
@@ -279,13 +319,20 @@ watch(
       return;
     }
 
-    const found = customers.value.find((c) => c.name === val);
+    const found = members.value.find((m) => m.name === val);
+
     if (found) {
       selectedCustomer.value = found;
     }
   },
   { immediate: true },
 );
+
+watch(openCustomer, (open) => {
+  if (open && members.value.length === 0) {
+    fetchMembers();
+  }
+});
 </script>
 
 <template>
@@ -364,7 +411,8 @@ watch(
                 updatePayment({
                   status: 'unpaid',
                   amountPaid: 0,
-                })
+                });
+                showCustomer = true;
               "
               :class="[
                 'flex-1 py-2 rounded-lg text-sm border',
@@ -404,21 +452,7 @@ watch(
         </div>
 
         <!-- CUSTOMER NAME (IF UNPAID) -->
-        <div v-if="props.payment?.status === 'unpaid'">
-          <p class="text-xs text-gray-500 mb-1">Nama Pelanggan</p>
-          <input
-            type="text"
-            placeholder="Masukkan nama"
-            class="w-full border rounded-lg px-3 py-2 text-sm"
-            :value="props.payment?.customerName"
-            @input="
-              updatePayment({
-                ...props.payment,
-                customerName: $event.target.value,
-              })
-            "
-          />
-        </div>
+        <div v-if="props.payment?.status === 'unpaid'" class="space-y-2"></div>
 
         <!-- FUND SOURCE (ONLY INJECT) -->
         <div v-if="props.isInject">
@@ -464,71 +498,86 @@ watch(
             Diskon
           </button>
         </div>
-
         <!-- Form Pelanggan -->
         <div v-if="showCustomer" class="space-y-2">
-          <Popover v-model:open="openCustomer">
+          <p class="text-xs text-gray-500">
+            Pilih pelanggan
+            <span v-if="props.payment.status === 'unpaid'" class="text-red-500">
+              *
+            </span>
+          </p>
+
+          <Popover
+            v-model:open="openCustomer"
+            @update:open="(v) => console.log('Popover:', v)"
+          >
             <PopoverTrigger as-child>
-              <button
-                class="w-full border rounded-lg px-3 py-2 text-sm flex justify-between items-center"
+              <Button
+                variant="outline"
+                role="combobox"
+                :aria-expanded="openCustomer"
+                class="w-full justify-between"
               >
                 {{ selectedCustomerLabel }}
-                <ChevronsUpDown class="h-4 w-4 opacity-50" />
-              </button>
+
+                <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
             </PopoverTrigger>
 
-            <PopoverContent class="w-full p-0">
+            <PopoverContent
+              class="w-[360px] p-0 z-[10000]"
+              side="bottom"
+              align="start"
+            >
               <Command>
-                <CommandInput placeholder="Cari pelanggan..." />
+                <CommandInput
+                  placeholder="Cari pelanggan..."
+                  :model-value="memberSearch"
+                  @update:model-value="onSearch"
+                />
 
-                <CommandEmpty>Tidak ditemukan</CommandEmpty>
+                <CommandEmpty> Tidak ada pelanggan. </CommandEmpty>
 
-                <CommandGroup class="max-h-60 overflow-y-auto">
-                  <!-- TANPA PELANGGAN -->
-                  <CommandItem
-                    @select="
-                      () => {
-                        selectedCustomer = null;
-                        updatePayment({ customerName: '' });
-                        openCustomer = false;
-                      }
-                    "
-                  >
+                <CommandGroup>
+                  <CommandItem value="" @select="selectCustomer(null)">
                     Tanpa pelanggan
                   </CommandItem>
 
-                  <!-- LIST -->
                   <CommandItem
-                    v-for="c in customers"
-                    :key="c.id"
-                    :value="c.name"
-                    @select="
-                      () => {
-                        selectedCustomer.value = c;
-                        updatePayment({ customerName: c.name });
-                        openCustomer = false;
-                      }
-                    "
+                    v-for="member in members"
+                    :key="member.id"
+                    :value="member.name"
+                    @select="selectCustomer(member)"
                   >
                     <Check
+                      class="mr-2 h-4 w-4"
                       :class="[
-                        'mr-2 h-4 w-4',
-                        selectedCustomer?.id === c.id
+                        selectedCustomer?.id === member.id
                           ? 'opacity-100'
                           : 'opacity-0',
                       ]"
                     />
-                    {{ c.name }}
+
+                    <div class="flex flex-col">
+                      <span>{{ member.name }}</span>
+
+                      <span class="text-xs text-slate-500">
+                        {{ member.phone }}
+                      </span>
+                    </div>
                   </CommandItem>
                 </CommandGroup>
               </Command>
             </PopoverContent>
           </Popover>
-
-          <!-- INFO TERPILIH -->
-          <div v-if="selectedCustomer" class="text-xs text-green-600">
-            Dipilih: {{ selectedCustomer.name }}
-          </div>
+          <p
+            v-if="
+              props.payment.status === 'unpaid' && !props.payment.customerName
+            "
+            class="text-xs text-red-500"
+          >
+            Pilih pelanggan untuk transaksi piutang.
+          </p>
         </div>
 
         <!-- Form Diskon -->
